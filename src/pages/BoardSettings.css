@@ -1,0 +1,91 @@
+.settings-page {
+  min-height: 100vh;
+}
+
+.settings-header {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-main {
+  padding: 2rem 0;
+}
+
+.settings-box {
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.settings-box h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.settings-box .message {
+  margin-bottom: 1rem;
+}
+
+.slug-input {
+  display: flex;
+  align-items: center;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.slug-prefix {
+  padding: 0.625rem 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.slug-input .input {
+  border: none;
+  border-radius: 0;
+}
+
+.color-input {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.color-input input[type="color"] {
+  width: 50px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+
+.color-input .input {
+  flex: 1;
+}
+
+.color-preview {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  text-align: center;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}

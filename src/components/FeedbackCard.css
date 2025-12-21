@@ -1,0 +1,125 @@
+.feedback-card {
+  display: flex;
+  gap: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: border-color 0.2s;
+}
+
+.feedback-card:hover {
+  border-color: var(--primary);
+}
+
+.vote-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 50px;
+}
+
+.vote-btn {
+  width: 36px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vote-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.vote-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.vote-btn.upvote.active {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.vote-btn.downvote.active {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.vote-count {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.feedback-content {
+  flex: 1;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.feedback-content:hover {
+  text-decoration: none;
+}
+
+.feedback-header {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.feedback-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.feedback-description {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.feedback-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.feedback-author {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.feedback-meta {
+  color: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .feedback-card {
+    flex-direction: column;
+  }
+
+  .vote-section {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+}
