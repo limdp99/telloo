@@ -8,9 +8,26 @@
 - Supabase (인증, DB)
 - React Router v7
 
+## 환경 구성
+
+### Git 브랜치
+- `main` - 프로덕션 (Vercel 자동 배포)
+- `dev` - 개발용 (Preview 배포)
+
+### 환경별 설정
+| 환경 | Supabase Project ID | Vercel URL |
+|------|---------------------|------------|
+| Production | hspgbzgiewlqswoykybf | https://telloo.vercel.app |
+| Development | kalhnkizplawebgdkcym | Preview URL (자동 생성) |
+
+### 환경 파일
+- `.env.development` - 로컬 개발용 (dev Supabase)
+- `.env.production` - 프로덕션용 (prod Supabase)
+- Vercel 환경변수도 별도 설정됨
+
 ## 실행 방법
 ```bash
-npm run dev  # http://localhost:5173
+npm run dev  # http://localhost:5173 (dev Supabase 연결)
 ```
 
 ## 완성된 기능
@@ -93,17 +110,24 @@ src/
 └── styles/global.css        # 전역 스타일
 ```
 
-## Supabase 테이블 구조 (추정)
-- profiles: user_id, nickname, avatar_url
-- boards: id, owner_id, title, description, slug, accent_color
-- feedback_posts: id, board_id, user_id, title, description, category, status, author_name, image_url
-- feedback_votes: post_id, user_id, vote_type
-- feedback_comments: id, post_id, user_id, content, is_admin
-- user_roles: board_id, user_id, role
+## Supabase 테이블 구조
+- profiles: id (uuid, PK), nickname, avatar_url, created_at
+- boards: id (uuid, PK), owner_id, title, description, slug (unique), accent_color, created_at
+- feedback_posts: id (uuid, PK), board_id, user_id, title, description, category, status, author_name, image_url, created_at
+- feedback_votes: post_id + user_id (복합 PK), vote_type
+- feedback_comments: id (uuid, PK), post_id, user_id, content, is_admin, created_at
+- user_roles: board_id + user_id (복합 PK), role
 
-## 마지막 작업 (2024-12-17)
-- 프로젝트 현황 파악 및 문서화
-- 이메일 인증 제거 (회원가입 시 바로 로그인)
+## 마지막 작업 (2025-12-31)
+- dev/prod 환경 분리
+  - Git 브랜치: main (prod), dev (개발)
+  - Supabase 프로젝트 2개로 분리
+  - Vercel 배포 설정 (GitHub 연동, 환경변수)
+- .env.development, .env.production 파일 생성
+- Vercel 연동 완료 (자동 배포)
 
 ## 참고
-- Supabase 대시보드에서 Authentication > Providers > Email > "Confirm email" 옵션 꺼야 함
+- Supabase 대시보드에서 Authentication > Providers > Email > "Confirm email" 옵션 꺼야 함 (dev, prod 둘 다)
+- Vercel 대시보드: https://vercel.com/phillips-projects-602ced67/telloo/settings
+- main에 push → Production 배포
+- dev에 push → Preview 배포
