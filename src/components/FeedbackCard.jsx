@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import './FeedbackCard.css'
@@ -17,7 +16,7 @@ const statusLabels = {
   declined: 'Declined',
 }
 
-export default function FeedbackCard({ post, boardSlug, onVoteChange }) {
+export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick }) {
   const { user } = useAuth()
 
   const handleVote = async (voteType) => {
@@ -64,48 +63,41 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange }) {
 
   return (
     <div className="feedback-card">
-      <div className="vote-section">
-        <button
-          className={`vote-btn upvote ${post.userVote === 'upvote' ? 'active' : ''}`}
-          onClick={() => handleVote('upvote')}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 15l-6-6-6 6" />
-          </svg>
-        </button>
-        <span className="vote-count">{post.voteScore}</span>
-        <button
-          className={`vote-btn downvote ${post.userVote === 'downvote' ? 'active' : ''}`}
-          onClick={() => handleVote('downvote')}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-      </div>
-
-      <Link to={`/${boardSlug}/feedback/${post.id}`} className="feedback-content">
-        <div className="feedback-header">
-          <span className={`badge badge-${post.category.replace('_', '-')}`}>
-            {categoryLabels[post.category]}
-          </span>
-          <span className={`badge badge-${post.status.replace('_', '-')}`}>
-            {statusLabels[post.status]}
-          </span>
-        </div>
-
-        <h3 className="feedback-title">{post.title}</h3>
+      <div className="feedback-content" onClick={onClick} style={{ cursor: 'pointer' }}>
+        <h3 className="feedback-title">
+          {post.title}
+          {post.ticket_number && <span className="ticket-number">#{post.ticket_number}</span>}
+        </h3>
         <p className="feedback-description">{post.description}</p>
 
         <div className="feedback-footer">
-          <span className="feedback-author">
-            {post.author_name || 'Anonymous'}
-          </span>
-          <span className="feedback-meta">
-            {formatDate(post.created_at)} · {post.commentCount} comments
-          </span>
+          <div className="feedback-status-row">
+            <span className={`status-indicator status-${post.status.replace('_', '-')}`}>
+              {statusLabels[post.status]}
+            </span>
+            {post.priority && post.priority !== 'empty' && (
+              <span className={`priority-indicator priority-${post.priority}`}>
+                {post.priority}
+              </span>
+            )}
+          </div>
         </div>
-      </Link>
+      </div>
+
+      <div className="vote-section">
+        <button
+          className={`vote-btn ${post.userVote === 'upvote' ? 'active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleVote('upvote')
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span>{post.upvotes}</span>
+        </button>
+      </div>
     </div>
   )
 }

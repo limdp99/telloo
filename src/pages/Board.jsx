@@ -5,6 +5,8 @@ import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
 import FeedbackCard from '../components/FeedbackCard'
 import FeedbackForm from '../components/FeedbackForm'
+import FeedbackDetailPanel from '../components/FeedbackDetailPanel'
+import BoardSettingsModal from '../components/BoardSettingsModal'
 import './Board.css'
 
 const CATEGORIES = [
@@ -35,6 +37,9 @@ export default function Board() {
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('votes')
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   useEffect(() => {
     loadBoard()
@@ -115,6 +120,14 @@ export default function Board() {
     fetchPosts()
   }
 
+  const handleFeedbackClick = (postId) => {
+    setSelectedFeedbackId(postId)
+  }
+
+  const handlePanelClose = () => {
+    setSelectedFeedbackId(null)
+  }
+
   if (!currentBoard) {
     return <div className="loading-page">Loading...</div>
   }
@@ -123,77 +136,117 @@ export default function Board() {
 
   return (
     <div className="board-page">
-      <header className="board-header" style={{ background: currentBoard.accent_color || 'var(--primary)' }}>
+      {/* Top Navigation */}
+      <nav className="top-nav">
+        <div className="top-nav-content">
+          <div className="top-nav-left">
+            <Link to="/dashboard" className="nav-logo">Telloo</Link>
+          </div>
+          <div className="top-nav-right">
+            {isAdmin && (
+              <button onClick={() => setShowSettings(true)} className="nav-link">
+                Settings
+              </button>
+            )}
+            {user ? (
+              <div className="profile-menu-wrapper">
+                <button
+                  className="profile-btn"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <span className="profile-avatar">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </span>
+                </button>
+                {showProfileMenu && (
+                  <>
+                    <div className="profile-menu-overlay" onClick={() => setShowProfileMenu(false)} />
+                    <div className="profile-menu">
+                      <div className="profile-menu-header">
+                        <span className="profile-email">{user.email}</span>
+                      </div>
+                      <div className="profile-menu-divider" />
+                      <Link to="/dashboard" className="profile-menu-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        </svg>
+                        Dashboard
+                      </Link>
+                      <button onClick={signOut} className="profile-menu-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                          <polyline points="16 17 21 12 16 7" />
+                          <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link to="/s/auth" className="nav-link">
+                Login
+              </Link>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Board Header Card */}
+      <div className="board-header-wrapper">
         <div className="container">
-          <div className="board-header-content">
+          <div className="board-header-card">
+            <div className="board-logo" style={{ background: currentBoard.accent_color || 'var(--primary)' }}>
+              {currentBoard.title.charAt(0).toUpperCase()}
+            </div>
             <div className="board-info">
               <h1>{currentBoard.title}</h1>
               {currentBoard.description && <p>{currentBoard.description}</p>}
             </div>
-            <div className="board-actions">
-              {user ? (
-                <>
-                  {isAdmin && (
-                    <Link to={`/${slug}/settings`} className="btn btn-secondary">
-                      Settings
-                    </Link>
-                  )}
-                  <button onClick={signOut} className="btn btn-secondary">
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link to="/s/auth" className="btn btn-secondary">
-                  Login
-                </Link>
-              )}
-            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="board-main">
+      {/* Toolbar */}
+      <div className="board-toolbar-wrapper">
         <div className="container">
           <div className="board-toolbar">
-            <div className="filters">
-              <select
-                className="input filter-select"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-
-              <select
-                className="input filter-select"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                {STATUSES.map(status => (
-                  <option key={status.value} value={status.value}>{status.label}</option>
-                ))}
-              </select>
-
-              <select
-                className="input filter-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="votes">Most Votes</option>
-                <option value="newest">Newest</option>
-                <option value="comments">Most Comments</option>
-              </select>
+            <div className="toolbar-left">
+              <div className="sort-dropdown">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+                <select
+                  className="sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="votes">Trending</option>
+                  <option value="newest">Newest</option>
+                  <option value="comments">Most Discussed</option>
+                </select>
+              </div>
+              <div className="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <span>Search</span>
+              </div>
             </div>
-
             <button
               className="btn btn-primary"
               onClick={() => setShowForm(true)}
             >
-              Submit Feedback
+              Make a suggestion
             </button>
           </div>
+        </div>
+      </div>
+
+      <main className="board-main">
+        <div className="container">
 
           {loading ? (
             <p className="loading-text">Loading feedback...</p>
@@ -213,6 +266,7 @@ export default function Board() {
                   post={post}
                   boardSlug={slug}
                   onVoteChange={handleVoteChange}
+                  onClick={() => handleFeedbackClick(post.id)}
                 />
               ))}
             </div>
@@ -226,6 +280,18 @@ export default function Board() {
           onClose={() => setShowForm(false)}
           onCreated={handlePostCreated}
         />
+      )}
+
+      {selectedFeedbackId && (
+        <FeedbackDetailPanel
+          feedbackId={selectedFeedbackId}
+          onClose={handlePanelClose}
+          onUpdate={fetchPosts}
+        />
+      )}
+
+      {showSettings && (
+        <BoardSettingsModal onClose={() => setShowSettings(false)} />
       )}
     </div>
   )

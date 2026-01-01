@@ -92,22 +92,28 @@ npm run dev  # http://localhost:5173 (dev Supabase 연결)
 ## 파일 구조
 ```
 src/
-├── lib/supabase.js          # Supabase 클라이언트
+├── lib/supabase.js              # Supabase 클라이언트
 ├── context/
-│   ├── AuthContext.jsx      # 인증 상태 관리
-│   └── BoardContext.jsx     # 보드 상태 관리
+│   ├── AuthContext.jsx          # 인증 상태 관리
+│   └── BoardContext.jsx         # 보드 상태 관리
 ├── pages/
-│   ├── Landing.jsx          # 랜딩 페이지
-│   ├── Auth.jsx             # 로그인/회원가입
-│   ├── Dashboard.jsx        # 대시보드
-│   ├── Board.jsx            # 피드백 보드
-│   ├── FeedbackDetail.jsx   # 피드백 상세
-│   ├── BoardSettings.jsx    # 보드 설정
-│   └── NotFound.jsx         # 404
+│   ├── Landing.jsx              # 랜딩 페이지
+│   ├── Auth.jsx                 # 로그인/회원가입
+│   ├── Dashboard.jsx            # 대시보드
+│   ├── Board.jsx                # 피드백 보드 (메인)
+│   ├── Board.css                # 보드 스타일
+│   ├── FeedbackDetail.jsx       # 피드백 상세 (구버전)
+│   ├── BoardSettings.jsx        # 보드 설정 (구버전)
+│   └── NotFound.jsx             # 404
 ├── components/
-│   ├── FeedbackCard.jsx     # 피드백 카드
-│   └── FeedbackForm.jsx     # 피드백 작성 폼
-└── styles/global.css        # 전역 스타일
+│   ├── FeedbackCard.jsx         # 피드백 카드
+│   ├── FeedbackCard.css         # 카드 스타일
+│   ├── FeedbackForm.jsx         # 피드백 작성 폼
+│   ├── FeedbackDetailPanel.jsx  # 피드백 상세 슬라이드 패널
+│   ├── FeedbackDetailPanel.css  # 패널 스타일
+│   ├── BoardSettingsModal.jsx   # 보드 설정 모달
+│   └── BoardSettingsModal.css   # 모달 스타일
+└── styles/global.css            # 전역 스타일
 ```
 
 ## Supabase 테이블 구조
@@ -118,50 +124,83 @@ src/
 - feedback_comments: id (uuid, PK), post_id, user_id, content, is_admin, created_at
 - user_roles: board_id + user_id (복합 PK), role
 
-## UI 개선 작업 (진행중)
+## UI 개선 작업
 
 UI 시안 위치: `UI/` 폴더 (board.png, ticket_detail.png, board_settings.png, account_settings.png)
 
-### 완료
+### 완료 (2026-01-01)
 - [x] 다크 모드 테마 색상 조정 (민트색 액센트 #2dd4bf)
 - [x] 모달/슬라이드 패널 CSS 추가 (global.css)
-
-### 진행 예정 (우선순위 높음)
-- [ ] 피드백 상세 → 슬라이드 패널로 변경
-  - FeedbackDetail.jsx를 패널 컴포넌트로 수정
+- [x] 피드백 상세 → 슬라이드 패널로 변경
+  - FeedbackDetailPanel.jsx 컴포넌트 생성
+  - FeedbackDetailPanel.css 스타일 생성
   - Board.jsx에서 클릭 시 패널 열기
-  - 시안 참고: ticket_detail.png
-- [ ] 보드 설정 → 모달로 변경
-  - BoardSettings.jsx를 모달 컴포넌트로 수정
-  - 사이드바 메뉴 구조 추가
-  - 시안 참고: board_settings.png
-- [ ] 투표 UI 변경 (체크마크 스타일)
+- [x] 보드 설정 → 모달로 변경
+  - BoardSettingsModal.jsx 컴포넌트 생성
+  - BoardSettingsModal.css 스타일 생성
+  - 사이드바 메뉴 구조 (General, People, Feedback, Advanced)
+- [x] 투표 UI 변경 (체크마크 스타일)
   - 기존: 위/아래 화살표 + 숫자
-  - 변경: ✓ + 숫자 (시안 참고)
-- [ ] 상단 네비게이션 구조 변경
-  - Settings, Assigns, Activity 메뉴
-  - 프로필 아이콘
-- [ ] 프로필 드롭다운 메뉴 추가
-  - Account settings
-  - My activity
-  - Create board
-  - 보드 전환 목록
-  - 시안 참고: account_settings.png
-- [ ] 티켓 번호 시스템 추가
-  - DB: feedback_posts에 ticket_number 컬럼 추가
-  - 표시: #1, #2, #3 형식
+  - 변경: ✓ + 숫자 (오른쪽 배치)
+  - downvote 제거, upvote만 유지
+- [x] 상단 네비게이션 구조 변경
+  - 고정 네비게이션 바 추가
+  - Settings 링크, 프로필 아이콘
+- [x] 프로필 드롭다운 메뉴 추가
+  - Dashboard 링크
+  - Logout
+- [x] 티켓 번호 시스템 (UI만 완료)
+  - FeedbackCard, FeedbackDetailPanel에서 #{ticket_number} 표시
+  - DB 스키마 변경 필요 (아래 SQL 참고)
 
 ### 진행 예정 (우선순위 중간)
-- [ ] 검색 기능
+- [ ] 검색 기능 (UI만 배치됨, 기능 미구현)
 - [ ] Priority (우선순위) 필드
 - [ ] 구독 기능
 - [ ] 투표자 목록 표시
 - [ ] 댓글 좋아요
 
-### DB 스키마 변경 필요 (UI 개선 시)
+### DB 스키마 변경 필요
+
+#### 티켓 번호 시스템 (즉시 실행 필요)
+```sql
+-- feedback_posts에 ticket_number 컬럼 추가
+ALTER TABLE feedback_posts ADD COLUMN ticket_number INTEGER;
+
+-- 기존 데이터에 번호 부여
+WITH numbered AS (
+  SELECT id, board_id,
+    ROW_NUMBER() OVER (PARTITION BY board_id ORDER BY created_at) as rn
+  FROM feedback_posts
+)
+UPDATE feedback_posts
+SET ticket_number = numbered.rn
+FROM numbered
+WHERE feedback_posts.id = numbered.id;
+
+-- 새 피드백 생성 시 자동 번호 부여를 위한 함수
+CREATE OR REPLACE FUNCTION set_ticket_number()
+RETURNS TRIGGER AS $$
+BEGIN
+  SELECT COALESCE(MAX(ticket_number), 0) + 1
+  INTO NEW.ticket_number
+  FROM feedback_posts
+  WHERE board_id = NEW.board_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 트리거 생성
+DROP TRIGGER IF EXISTS set_ticket_number_trigger ON feedback_posts;
+CREATE TRIGGER set_ticket_number_trigger
+  BEFORE INSERT ON feedback_posts
+  FOR EACH ROW
+  EXECUTE FUNCTION set_ticket_number();
+```
+
+#### 추가 기능용 (나중에 필요시)
 ```sql
 -- feedback_posts 테이블에 추가
-ALTER TABLE feedback_posts ADD COLUMN ticket_number SERIAL;
 ALTER TABLE feedback_posts ADD COLUMN priority TEXT DEFAULT 'empty';
 ALTER TABLE feedback_posts ADD COLUMN visibility TEXT DEFAULT 'public';
 
@@ -187,7 +226,15 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-01)
+## 마지막 작업 (2026-01-01 - 2차)
+- UI 시안 기반 전체 리뉴얼
+  - 피드백 상세 → 슬라이드 패널 (FeedbackDetailPanel)
+  - 보드 설정 → 모달 (BoardSettingsModal)
+  - 투표 UI → 체크마크 스타일
+  - 상단 네비게이션 + 프로필 드롭다운
+  - 티켓 번호 표시 (DB 스키마 미적용)
+
+## 이전 작업 (2026-01-01 - 1차)
 - UI 시안 분석 및 작업 목록 정리
 - 다크 모드 테마 색상 변경 (보라색 → 민트색)
 - global.css에 모달/슬라이드 패널 스타일 추가

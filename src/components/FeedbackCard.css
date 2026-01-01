@@ -2,93 +2,46 @@
   display: flex;
   gap: 1rem;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.25rem;
-  transition: border-color 0.2s;
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 1.5rem;
+  transition: background 0.2s;
 }
 
 .feedback-card:hover {
-  border-color: var(--primary);
-}
-
-.vote-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 50px;
-}
-
-.vote-btn {
-  width: 36px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.vote-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.vote-btn:hover {
   background: var(--surface-hover);
-  color: var(--text);
-}
-
-.vote-btn.upvote.active {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: var(--success);
-  color: var(--success);
-}
-
-.vote-btn.downvote.active {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: var(--error);
-  color: var(--error);
-}
-
-.vote-count {
-  font-weight: 600;
-  font-size: 1rem;
-  color: var(--text);
 }
 
 .feedback-content {
   flex: 1;
   color: var(--text);
   text-decoration: none;
+  min-width: 0;
 }
 
 .feedback-content:hover {
   text-decoration: none;
 }
 
-.feedback-header {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-}
-
 .feedback-title {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
   line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ticket-number {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.875rem;
 }
 
 .feedback-description {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -99,27 +52,128 @@
 
 .feedback-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  font-size: 0.8rem;
 }
 
-.feedback-author {
-  color: var(--primary);
-  font-weight: 500;
+.feedback-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.feedback-meta {
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
   color: var(--text-muted);
+}
+
+.status-indicator::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.status-indicator.status-under-review::before {
+  background: var(--text-muted);
+}
+
+.status-indicator.status-considering::before {
+  background: var(--warning);
+}
+
+.status-indicator.status-planned::before {
+  background: var(--info);
+}
+
+.status-indicator.status-in-progress::before {
+  background: var(--success);
+}
+
+.status-indicator.status-completed::before {
+  background: var(--success);
+}
+
+.status-indicator.status-declined::before {
+  background: var(--error);
+}
+
+.priority-indicator {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+  text-transform: capitalize;
+}
+
+.priority-indicator.priority-high {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
+}
+
+.priority-indicator.priority-medium {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.priority-indicator.priority-low {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--success);
+}
+
+.vote-section {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.25rem;
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.vote-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.vote-btn.active {
+  background: rgba(45, 212, 191, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.vote-btn svg {
+  flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
   .feedback-card {
     flex-direction: column;
+    gap: 0.75rem;
   }
 
   .vote-section {
-    flex-direction: row;
-    gap: 0.5rem;
+    padding-top: 0;
+  }
+
+  .vote-btn {
+    width: fit-content;
   }
 }
