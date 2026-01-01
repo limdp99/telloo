@@ -4,7 +4,8 @@ import { BoardProvider } from './context/BoardContext'
 import Landing from './pages/Landing'
 import Auth from './pages/Auth'
 import Dashboard from './pages/Dashboard'
-import Pricing from './pages/Pricing'
+// TODO: 결제 기능 구현 후 활성화
+// import Pricing from './pages/Pricing'
 import Board from './pages/Board'
 import FeedbackDetail from './pages/FeedbackDetail'
 import BoardSettings from './pages/BoardSettings'
@@ -21,7 +22,9 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/s/auth" element={<Auth />} />
             <Route path="/s/dashboard" element={<Dashboard />} />
+            {/* TODO: 결제 기능 구현 후 활성화
             <Route path="/s/pricing" element={<Pricing />} />
+            */}
             <Route path="/404" element={<NotFound />} />
 
             {/* Board routes (dynamic slug) */}

@@ -109,9 +109,11 @@ export default function Dashboard() {
           <nav className="dashboard-nav">
             <Link to="/" className="logo">Telloo</Link>
             <div className="nav-links">
+              {/* TODO: 결제 기능 구현 후 활성화
               <Link to="/s/pricing" className={`plan-badge plan-${subscription.plan}`}>
                 {PLAN_NAMES[subscription.plan]} Plan
               </Link>
+              */}
               <span className="user-email">{user.email}</span>
               <button onClick={signOut} className="btn btn-ghost">Logout</button>
             </div>
@@ -124,23 +126,27 @@ export default function Dashboard() {
           <div className="dashboard-title">
             <h1>Your Boards</h1>
             <div className="dashboard-actions">
+              {/* TODO: 결제 기능 구현 후 활성화
               <span className="boards-count">{boards.length} / {boardLimit} boards</span>
+              */}
               <button
                 className="btn btn-primary"
                 onClick={() => setShowCreate(true)}
-                disabled={!canCreateBoard}
+                // disabled={!canCreateBoard} // TODO: 결제 기능 구현 후 활성화
               >
                 Create Board
               </button>
             </div>
           </div>
 
+          {/* TODO: 결제 기능 구현 후 활성화
           {!canCreateBoard && (
             <div className="plan-limit">
               <span>You've reached your {PLAN_NAMES[subscription.plan]} plan limit.</span>
               <Link to="/s/pricing" className="upgrade-link">Upgrade for more boards</Link>
             </div>
           )}
+          */}
 
           {loading ? (
             <p className="loading">Loading...</p>
