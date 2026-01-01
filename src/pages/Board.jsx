@@ -40,6 +40,8 @@ export default function Board() {
   const [selectedFeedbackId, setSelectedFeedbackId] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearchInput, setShowSearchInput] = useState(false)
 
   useEffect(() => {
     loadBoard()
@@ -49,7 +51,7 @@ export default function Board() {
     if (currentBoard) {
       fetchPosts()
     }
-  }, [currentBoard, categoryFilter, statusFilter, sortBy])
+  }, [currentBoard, categoryFilter, statusFilter, sortBy, searchQuery])
 
   const loadBoard = async () => {
     const { error } = await fetchBoardBySlug(slug)
@@ -106,7 +108,15 @@ export default function Board() {
         postsWithVotes.sort((a, b) => b.commentCount - a.commentCount)
       }
 
-      setPosts(postsWithVotes)
+      // Filter by search query
+      const filteredPosts = searchQuery.trim()
+        ? postsWithVotes.filter(post =>
+            post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            post.description?.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        : postsWithVotes
+
+      setPosts(filteredPosts)
     }
     setLoading(false)
   }
@@ -227,12 +237,40 @@ export default function Board() {
                   <option value="comments">Most Discussed</option>
                 </select>
               </div>
-              <div className="search-box">
+              <div className={`search-box ${showSearchInput ? 'active' : ''}`}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
-                <span>Search</span>
+                {showSearchInput ? (
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Search feedback..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onBlur={() => {
+                      if (!searchQuery) setShowSearchInput(false)
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  <span onClick={() => setShowSearchInput(true)}>Search</span>
+                )}
+                {searchQuery && (
+                  <button
+                    className="search-clear"
+                    onClick={() => {
+                      setSearchQuery('')
+                      setShowSearchInput(false)
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
             <button
@@ -250,6 +288,20 @@ export default function Board() {
 
           {loading ? (
             <p className="loading-text">Loading feedback...</p>
+          ) : posts.length === 0 && searchQuery ? (
+            <div className="empty-posts">
+              <h2>No results found</h2>
+              <p>No feedback matching "{searchQuery}"</p>
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setSearchQuery('')
+                  setShowSearchInput(false)
+                }}
+              >
+                Clear search
+              </button>
+            </div>
           ) : posts.length === 0 ? (
             <div className="empty-posts">
               <h2>No feedback yet</h2>

@@ -243,11 +243,48 @@
   cursor: pointer;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  min-width: 100px;
 }
 
 .search-box:hover {
   background: var(--surface-hover);
+}
+
+.search-box.active {
+  background: var(--surface-hover);
+  min-width: 200px;
+}
+
+.search-input {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.875rem;
+  width: 100%;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.search-clear:hover {
+  background: var(--border);
+  color: var(--text);
 }
 
 /* Main Content */
