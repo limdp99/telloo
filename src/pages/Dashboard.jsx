@@ -1,8 +1,21 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
+import { supabase } from '../lib/supabase'
 import './Dashboard.css'
+
+const PLAN_LIMITS = {
+  free: 1,
+  pro: 3,
+  business: 10,
+}
+
+const PLAN_NAMES = {
+  free: 'Free',
+  pro: 'Pro',
+  business: 'Business',
+}
 
 export default function Dashboard() {
   const { user, signOut } = useAuth()
@@ -15,6 +28,28 @@ export default function Dashboard() {
   const [description, setDescription] = useState('')
   const [error, setError] = useState('')
   const [creating, setCreating] = useState(false)
+  const [subscription, setSubscription] = useState({ plan: 'free' })
+
+  useEffect(() => {
+    if (user) {
+      fetchSubscription()
+    }
+  }, [user])
+
+  const fetchSubscription = async () => {
+    const { data } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (data) {
+      setSubscription(data)
+    }
+  }
+
+  const boardLimit = PLAN_LIMITS[subscription.plan] || 1
+  const canCreateBoard = boards.length < boardLimit
 
   const handleCreateBoard = async (e) => {
     e.preventDefault()
@@ -74,6 +109,9 @@ export default function Dashboard() {
           <nav className="dashboard-nav">
             <Link to="/" className="logo">Telloo</Link>
             <div className="nav-links">
+              <Link to="/s/pricing" className={`plan-badge plan-${subscription.plan}`}>
+                {PLAN_NAMES[subscription.plan]} Plan
+              </Link>
               <span className="user-email">{user.email}</span>
               <button onClick={signOut} className="btn btn-ghost">Logout</button>
             </div>
@@ -85,17 +123,23 @@ export default function Dashboard() {
         <div className="container">
           <div className="dashboard-title">
             <h1>Your Boards</h1>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowCreate(true)}
-              disabled={boards.length >= 1} // Free plan limit
-            >
-              Create Board
-            </button>
+            <div className="dashboard-actions">
+              <span className="boards-count">{boards.length} / {boardLimit} boards</span>
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowCreate(true)}
+                disabled={!canCreateBoard}
+              >
+                Create Board
+              </button>
+            </div>
           </div>
 
-          {boards.length >= 1 && (
-            <p className="plan-limit">Free plan allows 1 board. Upgrade for more.</p>
+          {!canCreateBoard && (
+            <div className="plan-limit">
+              <span>You've reached your {PLAN_NAMES[subscription.plan]} plan limit.</span>
+              <Link to="/s/pricing" className="upgrade-link">Upgrade for more boards</Link>
+            </div>
           )}
 
           {loading ? (

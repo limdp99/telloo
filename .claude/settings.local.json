@@ -24,7 +24,8 @@
       "Bash(vercel --yes)",
       "Bash(vercel env add:*)",
       "Bash(vercel:*)",
-      "Bash(cmd //c \"taskkill /PID 13804 /F\")"
+      "Bash(cmd //c \"taskkill /PID 13804 /F\")",
+      "Bash(cmd //c \"taskkill /PID 11000 /F\")"
     ]
   }
 }

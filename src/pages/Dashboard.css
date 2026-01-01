@@ -29,6 +29,35 @@
   gap: 1rem;
 }
 
+.plan-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.plan-badge.plan-free {
+  background: var(--surface-hover);
+  color: var(--text-muted);
+}
+
+.plan-badge.plan-pro {
+  background: rgba(45, 212, 191, 0.15);
+  color: var(--primary);
+}
+
+.plan-badge.plan-business {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+.plan-badge:hover {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
 .user-email {
   color: var(--text-muted);
   font-size: 0.875rem;
@@ -49,10 +78,33 @@
   font-size: 1.75rem;
 }
 
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.boards-count {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
 .plan-limit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--text-muted);
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.upgrade-link {
+  color: var(--primary);
+  font-weight: 500;
 }
 
 .loading {
