@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import './FeedbackForm.css'
@@ -9,6 +9,9 @@ const CATEGORIES = [
   { value: 'improvement', label: 'Improvement' },
 ]
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+
 export default function FeedbackForm({ boardId, onClose, onCreated }) {
   const { user, profile } = useAuth()
   const [title, setTitle] = useState('')
@@ -17,6 +20,64 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
   const [authorName, setAuthorName] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const fileInputRef = useRef(null)
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError('Only JPEG, PNG, GIF, and WebP images are allowed')
+      return
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Image size must be less than 5MB')
+      return
+    }
+
+    setError('')
+    setImageFile(file)
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const uploadImage = async (postId) => {
+    if (!imageFile || !user) return null
+
+    const fileExt = imageFile.name.split('.').pop()
+    const fileName = `${user.id}/${postId}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('feedback-images')
+      .upload(fileName, imageFile)
+
+    if (uploadError) {
+      console.error('Image upload error:', uploadError)
+      return null
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('feedback-images')
+      .getPublicUrl(fileName)
+
+    return publicUrl
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -49,6 +110,17 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
       setError(insertError.message)
       setSubmitting(false)
       return
+    }
+
+    // Upload image if exists
+    if (imageFile && user && data?.[0]?.id) {
+      const imageUrl = await uploadImage(data[0].id)
+      if (imageUrl) {
+        await supabase
+          .from('feedback_posts')
+          .update({ image_url: imageUrl })
+          .eq('id', data[0].id)
+      }
     }
 
     onCreated()
@@ -119,7 +191,47 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
             />
           </div>
 
-          {!user && (
+          {user ? (
+            <div className="form-group">
+              <label className="form-label">Attachment (optional)</label>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleImageSelect}
+                style={{ display: 'none' }}
+              />
+              {imagePreview ? (
+                <div className="image-preview-container">
+                  <img src={imagePreview} alt="Preview" className="image-preview" />
+                  <button
+                    type="button"
+                    className="image-remove-btn"
+                    onClick={removeImage}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="image-upload-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  <span>Add screenshot</span>
+                </button>
+              )}
+              <p className="form-hint">Max 5MB. Supports JPEG, PNG, GIF, WebP</p>
+            </div>
+          ) : (
             <p className="login-hint">
               <a href="/s/auth">Login</a> to attach images and vote on feedback
             </p>

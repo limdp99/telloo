@@ -50,6 +50,21 @@
   margin-bottom: 0.75rem;
 }
 
+.feedback-image {
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 200px;
+}
+
+.feedback-image img {
+  width: 100%;
+  height: auto;
+  max-height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
 .feedback-footer {
   display: flex;
   justify-content: flex-start;

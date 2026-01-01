@@ -70,6 +70,12 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick })
         </h3>
         <p className="feedback-description">{post.description}</p>
 
+        {post.image_url && (
+          <div className="feedback-image">
+            <img src={post.image_url} alt="Attachment" />
+          </div>
+        )}
+
         <div className="feedback-footer">
           <div className="feedback-status-row">
             <span className={`status-indicator status-${post.status.replace('_', '-')}`}>

@@ -283,6 +283,15 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
 
           <div className="panel-description">
             <p>{post.description}</p>
+            {post.image_url && (
+              <div className="panel-image">
+                <img
+                  src={post.image_url}
+                  alt="Attachment"
+                  onClick={() => window.open(post.image_url, '_blank')}
+                />
+              </div>
+            )}
             <div className="description-meta">
               <span>{post.author_name || 'Anonymous'}</span>
               <span>·</span>
