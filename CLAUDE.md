@@ -71,7 +71,7 @@ npm run dev  # http://localhost:5173 (dev Supabase 연결)
 ## 미구현 기능 (TODO)
 
 ### 우선순위 높음
-- [ ] 결제 시스템 (Stripe 연동)
+- [x] 결제 시스템 (Stripe 연동) ✓
   - Free: 1 보드
   - Pro ($19.99): 3 보드 + 커스텀 브랜딩
   - Business ($59.99): 10 보드 + 팀 멤버 + API
@@ -80,14 +80,14 @@ npm run dev  # http://localhost:5173 (dev Supabase 연결)
 ### 우선순위 중간
 - [ ] 소셜 로그인 (Google, GitHub)
 - [ ] 팀 멤버 초대/관리
-- [ ] 이메일 알림 (새 피드백, 상태 변경)
+- [x] 이메일 알림 (새 피드백, 상태 변경) ✓
 - [x] 피드백 검색 ✓
 
 ### 우선순위 낮음
 - [ ] API Access (Business 플랜)
-- [ ] 커스텀 도메인
+- [x] 커스텀 도메인 ✓
 - [ ] 데이터 내보내기 (CSV)
-- [ ] 다크 모드
+- [ ] 다크 모드 (기본 테마가 다크모드)
 
 ## 파일 구조
 ```
@@ -226,7 +226,29 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-01 - 3차)
+## 마지막 작업 (2026-01-01 - 4차)
+- Priority 필드 구현
+  - 관리자가 Low/Medium/High 설정 가능
+  - FeedbackCard, FeedbackDetailPanel에서 표시
+- 투표자 목록 표시
+  - 투표자 아바타 클릭 시 전체 목록 팝오버
+  - 닉네임 및 투표 유형 표시
+- 댓글 좋아요 기능
+  - comment_likes 테이블
+  - 좋아요 버튼 및 카운트 표시
+- 커스텀 도메인 설정
+  - BoardSettingsModal > Advanced에서 설정
+  - DNS CNAME 가이드 표시
+- 결제 시스템 (Stripe 연동)
+  - Pricing 페이지 (/s/pricing)
+  - Dashboard에 구독 정보 및 보드 제한 표시
+  - Supabase Edge Functions (create-checkout-session, stripe-webhook)
+- 이메일 알림 기능
+  - send-notification Edge Function (Resend 사용)
+  - 피드백 구독 기능 (Subscribe 버튼)
+  - 상태 변경/댓글 추가 시 알림 발송
+
+## 이전 작업 (2026-01-01 - 3차)
 - 검색 기능 구현
   - 툴바에 검색 입력 UI
   - 제목/설명 실시간 필터링
