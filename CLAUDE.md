@@ -118,7 +118,81 @@ src/
 - feedback_comments: id (uuid, PK), post_id, user_id, content, is_admin, created_at
 - user_roles: board_id + user_id (복합 PK), role
 
-## 마지막 작업 (2025-12-31)
+## UI 개선 작업 (진행중)
+
+UI 시안 위치: `UI/` 폴더 (board.png, ticket_detail.png, board_settings.png, account_settings.png)
+
+### 완료
+- [x] 다크 모드 테마 색상 조정 (민트색 액센트 #2dd4bf)
+- [x] 모달/슬라이드 패널 CSS 추가 (global.css)
+
+### 진행 예정 (우선순위 높음)
+- [ ] 피드백 상세 → 슬라이드 패널로 변경
+  - FeedbackDetail.jsx를 패널 컴포넌트로 수정
+  - Board.jsx에서 클릭 시 패널 열기
+  - 시안 참고: ticket_detail.png
+- [ ] 보드 설정 → 모달로 변경
+  - BoardSettings.jsx를 모달 컴포넌트로 수정
+  - 사이드바 메뉴 구조 추가
+  - 시안 참고: board_settings.png
+- [ ] 투표 UI 변경 (체크마크 스타일)
+  - 기존: 위/아래 화살표 + 숫자
+  - 변경: ✓ + 숫자 (시안 참고)
+- [ ] 상단 네비게이션 구조 변경
+  - Settings, Assigns, Activity 메뉴
+  - 프로필 아이콘
+- [ ] 프로필 드롭다운 메뉴 추가
+  - Account settings
+  - My activity
+  - Create board
+  - 보드 전환 목록
+  - 시안 참고: account_settings.png
+- [ ] 티켓 번호 시스템 추가
+  - DB: feedback_posts에 ticket_number 컬럼 추가
+  - 표시: #1, #2, #3 형식
+
+### 진행 예정 (우선순위 중간)
+- [ ] 검색 기능
+- [ ] Priority (우선순위) 필드
+- [ ] 구독 기능
+- [ ] 투표자 목록 표시
+- [ ] 댓글 좋아요
+
+### DB 스키마 변경 필요 (UI 개선 시)
+```sql
+-- feedback_posts 테이블에 추가
+ALTER TABLE feedback_posts ADD COLUMN ticket_number SERIAL;
+ALTER TABLE feedback_posts ADD COLUMN priority TEXT DEFAULT 'empty';
+ALTER TABLE feedback_posts ADD COLUMN visibility TEXT DEFAULT 'public';
+
+-- 구독 테이블 추가
+CREATE TABLE feedback_subscriptions (
+  post_id UUID REFERENCES feedback_posts ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  PRIMARY KEY (post_id, user_id)
+);
+
+-- 댓글 좋아요 테이블 추가
+CREATE TABLE comment_likes (
+  comment_id UUID REFERENCES feedback_comments ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  PRIMARY KEY (comment_id, user_id)
+);
+
+-- boards 테이블에 추가
+ALTER TABLE boards ADD COLUMN logo_url TEXT;
+ALTER TABLE boards ADD COLUMN background_url TEXT;
+ALTER TABLE boards ADD COLUMN default_sort TEXT DEFAULT 'trending';
+ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
+ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
+```
+
+## 마지막 작업 (2026-01-01)
+- UI 시안 분석 및 작업 목록 정리
+- 다크 모드 테마 색상 변경 (보라색 → 민트색)
+- global.css에 모달/슬라이드 패널 스타일 추가
+
+## 이전 작업 (2025-12-31)
 - dev/prod 환경 분리
   - Git 브랜치: main (prod), dev (개발)
   - Supabase 프로젝트 2개로 분리

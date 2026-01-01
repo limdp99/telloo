@@ -12,7 +12,19 @@
       "Bash(curl:*)",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(vercel --version:*)",
+      "Bash(npm i:*)",
+      "Bash(vercel login:*)",
+      "Bash(vercel --yes)",
+      "Bash(vercel env add:*)",
+      "Bash(vercel:*)",
+      "Bash(cmd //c \"taskkill /PID 13804 /F\")"
     ]
   }
 }
