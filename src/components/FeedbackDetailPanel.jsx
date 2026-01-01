@@ -32,6 +32,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [showVotersList, setShowVotersList] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
   useEffect(() => {
     if (feedbackId) {
@@ -43,7 +44,60 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     setLoading(true)
     await fetchPost()
     await fetchComments()
+    if (user) {
+      await fetchSubscription()
+    }
     setLoading(false)
+  }
+
+  const fetchSubscription = async () => {
+    const { data } = await supabase
+      .from('feedback_subscriptions')
+      .select('*')
+      .eq('post_id', feedbackId)
+      .eq('user_id', user.id)
+      .single()
+
+    setIsSubscribed(!!data)
+  }
+
+  const toggleSubscription = async () => {
+    if (!user) {
+      alert('Please login to subscribe')
+      return
+    }
+
+    if (isSubscribed) {
+      await supabase
+        .from('feedback_subscriptions')
+        .delete()
+        .eq('post_id', feedbackId)
+        .eq('user_id', user.id)
+    } else {
+      await supabase
+        .from('feedback_subscriptions')
+        .insert({
+          post_id: feedbackId,
+          user_id: user.id
+        })
+    }
+
+    setIsSubscribed(!isSubscribed)
+  }
+
+  const sendNotification = async (type, data = {}) => {
+    try {
+      await supabase.functions.invoke('send-notification', {
+        body: {
+          type,
+          postId: feedbackId,
+          triggeredBy: user?.id,
+          ...data
+        }
+      })
+    } catch (error) {
+      console.error('Failed to send notification:', error)
+    }
   }
 
   const fetchPost = async () => {
@@ -183,6 +237,9 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
       .update({ status: newStatus })
       .eq('id', post.id)
 
+    // Send notification for status change
+    sendNotification('status_change', { newStatus })
+
     fetchPost()
     onUpdate?.()
   }
@@ -204,15 +261,19 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     setSubmitting(true)
 
     const isAdmin = userRole === 'admin' || userRole === 'super_admin'
+    const commentContent = newComment.trim()
 
     await supabase
       .from('feedback_comments')
       .insert({
         post_id: feedbackId,
         user_id: user.id,
-        content: newComment.trim(),
+        content: commentContent,
         is_admin: isAdmin,
       })
+
+    // Send notification for new comment
+    sendNotification('new_comment', { commentContent })
 
     setNewComment('')
     setSubmitting(false)
@@ -391,11 +452,21 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
           </div>
 
           <div className="panel-actions">
-            <button className="action-btn subscribed">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              Subscribed
+            <button
+              className={`action-btn ${isSubscribed ? 'subscribed' : ''}`}
+              onClick={toggleSubscription}
+            >
+              {isSubscribed ? (
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              )}
+              {isSubscribed ? 'Subscribed' : 'Subscribe'}
             </button>
             <button
               className={`action-btn upvote ${post.userVote === 'upvote' ? 'active' : ''}`}
