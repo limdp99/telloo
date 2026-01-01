@@ -138,6 +138,124 @@
   color: var(--text-muted);
 }
 
+.voters-wrapper {
+  position: relative;
+}
+
+.voter-avatars-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.voter-avatars-btn:hover .voters-count {
+  color: var(--primary);
+}
+
+.voters-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.voters-list-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.voters-list-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+  max-width: 280px;
+  z-index: 11;
+}
+
+.voters-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.voters-list-header button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+}
+
+.voters-list-header button:hover {
+  color: var(--text);
+}
+
+.voters-list-content {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.voter-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.voter-item:hover {
+  background: var(--surface-hover);
+}
+
+.voter-item-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.voter-item-name {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voter-item-type {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.voter-item-type.upvote {
+  color: var(--success);
+}
+
+.voter-item-type.downvote {
+  color: var(--error);
+}
+
 .status-select {
   background: transparent;
   border: none;
@@ -149,6 +267,41 @@
 
 .status-select:focus {
   outline: none;
+}
+
+.priority-select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.priority-select:focus {
+  outline: none;
+}
+
+.priority-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.priority-badge.priority-low {
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--success);
+}
+
+.priority-badge.priority-medium {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.priority-badge.priority-high {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
 }
 
 .status-indicator {
@@ -331,6 +484,20 @@
 .comment-like:hover,
 .comment-more:hover {
   color: var(--text);
+}
+
+.comment-like {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.comment-like.liked {
+  color: var(--error);
+}
+
+.comment-like.liked:hover {
+  color: var(--error);
 }
 
 .panel-comment-form {

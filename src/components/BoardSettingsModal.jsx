@@ -47,6 +47,7 @@ export default function BoardSettingsModal({ onClose }) {
   const [language, setLanguage] = useState('en')
   const [defaultView, setDefaultView] = useState('feedback')
   const [defaultSort, setDefaultSort] = useState('trending')
+  const [customDomain, setCustomDomain] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -59,6 +60,7 @@ export default function BoardSettingsModal({ onClose }) {
       setLanguage(currentBoard.language || 'en')
       setDefaultView(currentBoard.default_view || 'feedback')
       setDefaultSort(currentBoard.default_sort || 'trending')
+      setCustomDomain(currentBoard.custom_domain || '')
     }
   }, [currentBoard])
 
@@ -82,6 +84,7 @@ export default function BoardSettingsModal({ onClose }) {
       description: description.trim() || null,
       slug: slug,
       accent_color: accentColor,
+      custom_domain: customDomain.trim() || null,
     })
 
     if (updateError) {
@@ -305,8 +308,53 @@ export default function BoardSettingsModal({ onClose }) {
         {renderIcon('advanced')}
         Advanced
       </h2>
-      <div className="settings-placeholder">
-        <p>Advanced settings coming soon.</p>
+
+      <div className="settings-row">
+        <div className="settings-label">
+          <span className="label-title">Custom Domain</span>
+          <span className="label-desc">Use your own domain for this board (e.g., feedback.yoursite.com)</span>
+        </div>
+        <div className="settings-value">
+          <input
+            type="text"
+            className="settings-input"
+            value={customDomain}
+            onChange={(e) => setCustomDomain(e.target.value.toLowerCase())}
+            placeholder="feedback.yoursite.com"
+          />
+        </div>
+      </div>
+
+      {customDomain && (
+        <div className="domain-instructions">
+          <h4>DNS Configuration</h4>
+          <p>Add the following CNAME record to your DNS settings:</p>
+          <div className="dns-record">
+            <div className="dns-row">
+              <span className="dns-label">Type</span>
+              <span className="dns-value">CNAME</span>
+            </div>
+            <div className="dns-row">
+              <span className="dns-label">Name</span>
+              <span className="dns-value">{customDomain.split('.')[0]}</span>
+            </div>
+            <div className="dns-row">
+              <span className="dns-label">Value</span>
+              <span className="dns-value">cname.vercel-dns.com</span>
+            </div>
+          </div>
+          <p className="dns-note">After configuring DNS, it may take up to 48 hours for changes to propagate.</p>
+        </div>
+      )}
+
+      <div className="settings-row danger-zone">
+        <div className="settings-label">
+          <span className="label-title danger">Delete Board</span>
+          <span className="label-desc">Permanently delete this board and all its data</span>
+        </div>
+        <div className="settings-value">
+          <button className="delete-board-btn">Delete Board</button>
+        </div>
       </div>
     </div>
   )

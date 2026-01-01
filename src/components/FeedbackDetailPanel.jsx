@@ -15,6 +15,13 @@ const statusLabels = {
 
 const STATUSES = ['under_review', 'considering', 'planned', 'in_progress', 'completed', 'declined']
 
+const PRIORITIES = [
+  { value: 'empty', label: 'Empty' },
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+]
+
 export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const { user } = useAuth()
   const { userRole } = useBoard()
@@ -24,6 +31,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const [newComment, setNewComment] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [showVotersList, setShowVotersList] = useState(false)
 
   useEffect(() => {
     if (feedbackId) {
@@ -53,11 +61,33 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
       return
     }
 
+    // Fetch voter profiles
+    const voterIds = data.feedback_votes?.map(v => v.user_id) || []
+    let voterProfiles = {}
+    if (voterIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, nickname')
+        .in('id', voterIds)
+
+      if (profiles) {
+        voterProfiles = profiles.reduce((acc, p) => {
+          acc[p.id] = p.nickname
+          return acc
+        }, {})
+      }
+    }
+
     const upvotes = data.feedback_votes?.filter(v => v.vote_type === 'upvote').length || 0
     const downvotes = data.feedback_votes?.filter(v => v.vote_type === 'downvote').length || 0
     const userVote = user
       ? data.feedback_votes?.find(v => v.user_id === user.id)?.vote_type || null
       : null
+
+    const votersWithProfiles = (data.feedback_votes || []).map(v => ({
+      ...v,
+      nickname: voterProfiles[v.user_id] || 'Anonymous'
+    }))
 
     setPost({
       ...data,
@@ -65,7 +95,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
       downvotes,
       voteScore: upvotes - downvotes,
       userVote,
-      voters: data.feedback_votes || [],
+      voters: votersWithProfiles,
     })
   }
 
@@ -74,12 +104,43 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
       .from('feedback_comments')
       .select(`
         *,
-        profiles (nickname, avatar_url)
+        profiles (nickname, avatar_url),
+        comment_likes (user_id)
       `)
       .eq('post_id', feedbackId)
       .order('created_at', { ascending: true })
 
-    setComments(data || [])
+    const commentsWithLikes = (data || []).map(comment => ({
+      ...comment,
+      likeCount: comment.comment_likes?.length || 0,
+      userLiked: user ? comment.comment_likes?.some(like => like.user_id === user.id) : false
+    }))
+
+    setComments(commentsWithLikes)
+  }
+
+  const handleCommentLike = async (commentId, currentlyLiked) => {
+    if (!user) {
+      alert('Please login to like comments')
+      return
+    }
+
+    if (currentlyLiked) {
+      await supabase
+        .from('comment_likes')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', user.id)
+    } else {
+      await supabase
+        .from('comment_likes')
+        .insert({
+          comment_id: commentId,
+          user_id: user.id
+        })
+    }
+
+    fetchComments()
   }
 
   const handleVote = async () => {
@@ -120,6 +181,16 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     await supabase
       .from('feedback_posts')
       .update({ status: newStatus })
+      .eq('id', post.id)
+
+    fetchPost()
+    onUpdate?.()
+  }
+
+  const handlePriorityChange = async (newPriority) => {
+    await supabase
+      .from('feedback_posts')
+      .update({ priority: newPriority })
       .eq('id', post.id)
 
     fetchPost()
@@ -203,14 +274,50 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
               <span className="meta-label">Voters</span>
               <div className="meta-value voters">
                 {post.voters.length > 0 ? (
-                  <div className="voter-avatars">
-                    {post.voters.slice(0, 3).map((voter, i) => (
-                      <div key={i} className="voter-avatar">
-                        {voter.user_id.substring(0, 2).toUpperCase()}
+                  <div className="voters-wrapper">
+                    <button
+                      className="voter-avatars-btn"
+                      onClick={() => setShowVotersList(!showVotersList)}
+                    >
+                      <div className="voter-avatars">
+                        {post.voters.slice(0, 3).map((voter, i) => (
+                          <div key={i} className="voter-avatar">
+                            {(voter.nickname || 'A').charAt(0).toUpperCase()}
+                          </div>
+                        ))}
+                        {post.voters.length > 3 && (
+                          <div className="voter-avatar more">+{post.voters.length - 3}</div>
+                        )}
                       </div>
-                    ))}
-                    {post.voters.length > 3 && (
-                      <div className="voter-avatar more">+{post.voters.length - 3}</div>
+                      <span className="voters-count">{post.voters.length} voters</span>
+                    </button>
+                    {showVotersList && (
+                      <>
+                        <div className="voters-list-overlay" onClick={() => setShowVotersList(false)} />
+                        <div className="voters-list-popover">
+                          <div className="voters-list-header">
+                            <span>Voters ({post.voters.length})</span>
+                            <button onClick={() => setShowVotersList(false)}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className="voters-list-content">
+                            {post.voters.map((voter, i) => (
+                              <div key={i} className="voter-item">
+                                <div className="voter-item-avatar">
+                                  {(voter.nickname || 'A').charAt(0).toUpperCase()}
+                                </div>
+                                <span className="voter-item-name">{voter.nickname || 'Anonymous'}</span>
+                                <span className={`voter-item-type ${voter.vote_type}`}>
+                                  {voter.vote_type === 'upvote' ? '+1' : '-1'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 ) : (
@@ -246,7 +353,27 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
             <div className="meta-row">
               <span className="meta-label">Priority</span>
               <div className="meta-value">
-                <span className="empty">Empty</span>
+                {isAdmin ? (
+                  <select
+                    className="priority-select"
+                    value={post.priority || 'empty'}
+                    onChange={(e) => handlePriorityChange(e.target.value)}
+                  >
+                    {PRIORITIES.map(p => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  post.priority && post.priority !== 'empty' ? (
+                    <span className={`priority-badge priority-${post.priority}`}>
+                      {post.priority.charAt(0).toUpperCase() + post.priority.slice(1)}
+                    </span>
+                  ) : (
+                    <span className="empty">Empty</span>
+                  )
+                )}
               </div>
             </div>
 
@@ -323,10 +450,14 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                     <span>·</span>
                     <span>{formatTimeAgo(comment.created_at)}</span>
                     <span>·</span>
-                    <button className="comment-like">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                    <button
+                      className={`comment-like ${comment.userLiked ? 'liked' : ''}`}
+                      onClick={() => handleCommentLike(comment.id, comment.userLiked)}
+                    >
+                      <svg viewBox="0 0 24 24" fill={comment.userLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" width="14" height="14">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                       </svg>
+                      {comment.likeCount > 0 && <span>{comment.likeCount}</span>}
                     </button>
                     <button className="comment-more">···</button>
                   </div>
