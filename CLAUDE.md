@@ -75,13 +75,13 @@ npm run dev  # http://localhost:5173 (dev Supabase 연결)
   - Free: 1 보드
   - Pro ($19.99): 3 보드 + 커스텀 브랜딩
   - Business ($59.99): 10 보드 + 팀 멤버 + API
-- [ ] 이미지 업로드 (피드백에 스크린샷 첨부)
+- [x] 이미지 업로드 (피드백에 스크린샷 첨부) ✓
 
 ### 우선순위 중간
 - [ ] 소셜 로그인 (Google, GitHub)
 - [ ] 팀 멤버 초대/관리
 - [ ] 이메일 알림 (새 피드백, 상태 변경)
-- [ ] 피드백 검색
+- [x] 피드백 검색 ✓
 
 ### 우선순위 낮음
 - [ ] API Access (Business 플랜)
@@ -149,12 +149,12 @@ UI 시안 위치: `UI/` 폴더 (board.png, ticket_detail.png, board_settings.png
 - [x] 프로필 드롭다운 메뉴 추가
   - Dashboard 링크
   - Logout
-- [x] 티켓 번호 시스템 (UI만 완료)
+- [x] 티켓 번호 시스템 ✓
   - FeedbackCard, FeedbackDetailPanel에서 #{ticket_number} 표시
-  - DB 스키마 변경 필요 (아래 SQL 참고)
+  - DB에 ticket_number 컬럼 및 자동 부여 트리거 적용 완료
 
 ### 진행 예정 (우선순위 중간)
-- [ ] 검색 기능 (UI만 배치됨, 기능 미구현)
+- [x] 검색 기능 ✓
 - [ ] Priority (우선순위) 필드
 - [ ] 구독 기능
 - [ ] 투표자 목록 표시
@@ -226,13 +226,24 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-01 - 2차)
+## 마지막 작업 (2026-01-01 - 3차)
+- 검색 기능 구현
+  - 툴바에 검색 입력 UI
+  - 제목/설명 실시간 필터링
+  - 검색 결과 없음 메시지
+- 이미지 업로드 기능 구현
+  - Supabase Storage 버킷 (feedback-images)
+  - FeedbackForm에 이미지 첨부 UI (최대 5MB, JPEG/PNG/GIF/WebP)
+  - FeedbackCard에 썸네일 표시
+  - FeedbackDetailPanel에 전체 이미지 표시
+
+## 이전 작업 (2026-01-01 - 2차)
 - UI 시안 기반 전체 리뉴얼
   - 피드백 상세 → 슬라이드 패널 (FeedbackDetailPanel)
   - 보드 설정 → 모달 (BoardSettingsModal)
   - 투표 UI → 체크마크 스타일
   - 상단 네비게이션 + 프로필 드롭다운
-  - 티켓 번호 표시 (DB 스키마 미적용)
+  - 티켓 번호 표시
 
 ## 이전 작업 (2026-01-01 - 1차)
 - UI 시안 분석 및 작업 목록 정리
