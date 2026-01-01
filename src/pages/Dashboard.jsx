@@ -164,7 +164,7 @@ export default function Dashboard() {
                 <Link key={board.id} to={`/${board.slug}`} className="board-card">
                   <h3>{board.title}</h3>
                   <p>{board.description || 'No description'}</p>
-                  <span className="board-url">telloo.com/{board.slug}</span>
+                  <span className="board-url">telloo.io/{board.slug}</span>
                 </Link>
               ))}
             </div>
@@ -194,7 +194,7 @@ export default function Dashboard() {
               <div className="form-group">
                 <label className="form-label">URL Slug</label>
                 <div className="slug-input">
-                  <span className="slug-prefix">telloo.com/</span>
+                  <span className="slug-prefix">telloo.io/</span>
                   <input
                     type="text"
                     className="input"

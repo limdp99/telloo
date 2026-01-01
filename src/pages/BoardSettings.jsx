@@ -139,7 +139,7 @@ export default function BoardSettings() {
               <div className="form-group">
                 <label className="form-label">URL Slug</label>
                 <div className="slug-input">
-                  <span className="slug-prefix">telloo.com/</span>
+                  <span className="slug-prefix">telloo.io/</span>
                   <input
                     type="text"
                     className="input"

@@ -170,7 +170,7 @@ export default function BoardSettingsModal({ onClose }) {
       <div className="settings-row">
         <div className="settings-label">
           <span className="label-title">Board URL</span>
-          <span className="label-desc">telloo.vercel.app/{slug}</span>
+          <span className="label-desc">telloo.io/{slug}</span>
         </div>
         <div className="settings-value">
           <input

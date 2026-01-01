@@ -2,8 +2,8 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'Telloo <notifications@telloo.com>'
-const APP_URL = Deno.env.get('APP_URL') || 'https://telloo.vercel.app'
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'Telloo <notifications@telloo.io>'
+const APP_URL = Deno.env.get('APP_URL') || 'https://telloo.io'
 
 interface NotificationPayload {
   type: 'new_comment' | 'status_change' | 'new_vote'
