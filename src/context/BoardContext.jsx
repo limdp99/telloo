@@ -68,7 +68,7 @@ export function BoardProvider({ children }) {
       .select('role')
       .eq('board_id', boardId)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     setUserRole(data?.role || 'user')
   }

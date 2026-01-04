@@ -7,6 +7,7 @@ import FeedbackCard from '../components/FeedbackCard'
 import FeedbackForm from '../components/FeedbackForm'
 import FeedbackDetailPanel from '../components/FeedbackDetailPanel'
 import BoardSettingsModal from '../components/BoardSettingsModal'
+import AccountSettingsModal from '../components/AccountSettingsModal'
 import './Board.css'
 
 const CATEGORIES = [
@@ -27,7 +28,7 @@ const STATUSES = [
 
 export default function Board() {
   const { slug } = useParams()
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const { currentBoard, fetchBoardBySlug, userRole } = useBoard()
   const navigate = useNavigate()
 
@@ -40,6 +41,7 @@ export default function Board() {
   const [selectedFeedbackId, setSelectedFeedbackId] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [showAccountSettings, setShowAccountSettings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearchInput, setShowSearchInput] = useState(false)
 
@@ -164,9 +166,13 @@ export default function Board() {
                   className="profile-btn"
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                 >
-                  <span className="profile-avatar">
-                    {user.email?.charAt(0).toUpperCase()}
-                  </span>
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="profile-avatar-img" />
+                  ) : (
+                    <span className="profile-avatar">
+                      {profile?.nickname?.charAt(0)?.toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </button>
                 {showProfileMenu && (
                   <>
@@ -182,6 +188,13 @@ export default function Board() {
                         </svg>
                         Dashboard
                       </Link>
+                      <button onClick={() => { setShowProfileMenu(false); setShowAccountSettings(true); }} className="profile-menu-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        Account
+                      </button>
                       <button onClick={signOut} className="profile-menu-item">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -330,6 +343,10 @@ export default function Board() {
 
       {showSettings && (
         <BoardSettingsModal onClose={() => setShowSettings(false)} />
+      )}
+
+      {showAccountSettings && (
+        <AccountSettingsModal onClose={() => setShowAccountSettings(false)} />
       )}
     </div>
   )

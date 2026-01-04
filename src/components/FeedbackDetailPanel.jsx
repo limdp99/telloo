@@ -24,7 +24,7 @@ const PRIORITIES = [
 ]
 
 export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { userRole } = useBoard()
   const navigate = useNavigate()
   const location = useLocation()
@@ -37,6 +37,8 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const [showVotersList, setShowVotersList] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [loginModalMessage, setLoginModalMessage] = useState('')
+  const [commentImage, setCommentImage] = useState(null)
+  const [commentImagePreview, setCommentImagePreview] = useState(null)
 
   useEffect(() => {
     if (feedbackId) {
@@ -87,12 +89,12 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     if (voterIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, nickname')
+        .select('id, nickname, avatar_url')
         .in('id', voterIds)
 
       if (profiles) {
         voterProfiles = profiles.reduce((acc, p) => {
-          acc[p.id] = p.nickname
+          acc[p.id] = { nickname: p.nickname, avatar_url: p.avatar_url }
           return acc
         }, {})
       }
@@ -106,7 +108,8 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
 
     const votersWithProfiles = (data.feedback_votes || []).map(v => ({
       ...v,
-      nickname: voterProfiles[v.user_id] || 'Anonymous'
+      nickname: voterProfiles[v.user_id]?.nickname || 'Anonymous',
+      avatar_url: voterProfiles[v.user_id]?.avatar_url || null
     }))
 
     setPost({
@@ -222,37 +225,127 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     onUpdate?.()
   }
 
+  const handleCommentImageSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Only JPEG, PNG, GIF, and WebP images are allowed')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB')
+      return
+    }
+
+    setCommentImage(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setCommentImagePreview(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  const removeCommentImage = () => {
+    setCommentImage(null)
+    setCommentImagePreview(null)
+  }
+
+  const uploadCommentImage = async (commentId, imageFile) => {
+    if (!imageFile || !user) {
+      return null
+    }
+
+    const fileExt = imageFile.name.split('.').pop()
+    const fileName = `comment-${commentId}-${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('feedback-images')
+      .upload(fileName, imageFile)
+
+    if (uploadError) {
+      console.error('Image upload error:', uploadError)
+      return null
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('feedback-images')
+      .getPublicUrl(fileName)
+
+    return publicUrl
+  }
+
   const handleCommentSubmit = async (e) => {
     e.preventDefault()
-    if (!newComment.trim() || !user) return
+    if ((!newComment.trim() && !commentImage) || !user) return
 
     setSubmitting(true)
 
     const isAdmin = userRole === 'admin' || userRole === 'super_admin'
     const commentContent = newComment.trim()
 
-    const { error } = await supabase
+    // Save before clearing - for optimistic update and upload
+    const savedImagePreview = commentImagePreview
+    const savedImageFile = commentImage
+
+    // Clear form immediately for better UX
+    setNewComment('')
+    setCommentImage(null)
+    setCommentImagePreview(null)
+
+    // Show optimistic comment with local preview immediately
+    const tempId = `temp-${Date.now()}`
+    const optimisticComment = {
+      id: tempId,
+      content: commentContent,
+      image_url: savedImagePreview, // Use saved local preview (base64)
+      is_admin: isAdmin,
+      created_at: new Date().toISOString(),
+      profiles: {
+        nickname: profile?.nickname || user.user_metadata?.nickname || 'User',
+        avatar_url: profile?.avatar_url || null
+      },
+      likeCount: 0,
+      userLiked: false,
+    }
+    setComments(prev => [...prev, optimisticComment])
+
+    // Upload image if exists
+    let imageUrl = null
+    if (savedImageFile) {
+      imageUrl = await uploadCommentImage(tempId, savedImageFile)
+    }
+
+    const { data, error } = await supabase
       .from('feedback_comments')
       .insert({
         post_id: feedbackId,
         user_id: user.id,
         content: commentContent,
         is_admin: isAdmin,
+        image_url: imageUrl,
       })
+      .select()
 
     if (error) {
       console.error('Comment insert error:', error)
+      // Remove optimistic comment on error
+      setComments(prev => prev.filter(c => c.id !== tempId))
       alert('Failed to post comment: ' + error.message)
       setSubmitting(false)
       return
     }
 
+    // Update optimistic comment with real data
+    setComments(prev => prev.map(c =>
+      c.id === tempId
+        ? { ...c, id: data[0].id, image_url: imageUrl || savedImagePreview }
+        : c
+    ))
+
     // Send notification for new comment
     sendNotification('new_comment', { commentContent })
 
-    setNewComment('')
     setSubmitting(false)
-    fetchComments()
   }
 
   const formatTimeAgo = (dateString) => {
@@ -321,7 +414,11 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                       <div className="voter-avatars">
                         {post.voters.slice(0, 3).map((voter, i) => (
                           <div key={i} className="voter-avatar">
-                            {(voter.nickname || 'A').charAt(0).toUpperCase()}
+                            {voter.avatar_url ? (
+                              <img src={voter.avatar_url} alt="" className="voter-avatar-img" />
+                            ) : (
+                              (voter.nickname || 'A').charAt(0).toUpperCase()
+                            )}
                           </div>
                         ))}
                         {post.voters.length > 3 && (
@@ -346,7 +443,11 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                             {post.voters.map((voter, i) => (
                               <div key={i} className="voter-item">
                                 <div className="voter-item-avatar">
-                                  {(voter.nickname || 'A').charAt(0).toUpperCase()}
+                                  {voter.avatar_url ? (
+                                    <img src={voter.avatar_url} alt="" className="voter-item-avatar-img" />
+                                  ) : (
+                                    (voter.nickname || 'A').charAt(0).toUpperCase()
+                                  )}
                                 </div>
                                 <span className="voter-item-name">{voter.nickname || 'Anonymous'}</span>
                                 <span className={`voter-item-type ${voter.vote_type}`}>
@@ -463,7 +564,12 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
             {comments.map(comment => (
               <div key={comment.id} className="comment-item">
                 <div className="comment-avatar">
-                  {comment.is_admin ? (
+                  {comment.profiles?.avatar_url ? (
+                    <div className={`avatar ${comment.is_admin ? 'admin' : ''}`}>
+                      <img src={comment.profiles.avatar_url} alt="" className="avatar-img" />
+                      {comment.is_admin && <span className="admin-dot"></span>}
+                    </div>
+                  ) : comment.is_admin ? (
                     <div className="avatar admin">
                       <span>A</span>
                       <span className="admin-dot"></span>
@@ -475,7 +581,12 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                   )}
                 </div>
                 <div className="comment-body">
-                  <p className="comment-text">{comment.content}</p>
+                  {comment.content && <p className="comment-text">{comment.content}</p>}
+                  {comment.image_url && (
+                    <div className="comment-image">
+                      <img src={comment.image_url} alt="Comment attachment" onClick={() => window.open(comment.image_url, '_blank')} />
+                    </div>
+                  )}
                   <div className="comment-meta">
                     <span className="comment-author">
                       {comment.profiles?.nickname || 'User'}
@@ -498,10 +609,18 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="panel-comment-form">
-            {user ? (
-              <form onSubmit={handleCommentSubmit}>
+        <div className="panel-comment-form">
+          {user ? (
+            <form onSubmit={handleCommentSubmit}>
+              {commentImagePreview && (
+                <div className="comment-image-preview">
+                  <img src={commentImagePreview} alt="Preview" />
+                  <button type="button" className="remove-image-btn" onClick={removeCommentImage}>×</button>
+                </div>
+              )}
+              <div className="comment-input-row">
                 <input
                   type="text"
                   className="comment-input"
@@ -510,13 +629,33 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                   placeholder="Leave a comment"
                   disabled={submitting}
                 />
-              </form>
-            ) : (
-              <div className="login-prompt">
-                Login to leave a comment
+                <label className="comment-image-btn">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleCommentImageSelect}
+                    style={{ display: 'none' }}
+                  />
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </label>
+                <button
+                  type="submit"
+                  className="comment-submit-btn"
+                  disabled={submitting || (!newComment.trim() && !commentImage)}
+                >
+                  {submitting ? '...' : '→'}
+                </button>
               </div>
-            )}
-          </div>
+            </form>
+          ) : (
+            <div className="login-prompt">
+              Login to leave a comment
+            </div>
+          )}
         </div>
       </div>
 

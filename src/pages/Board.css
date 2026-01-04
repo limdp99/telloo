@@ -91,6 +91,13 @@
   font-weight: 600;
 }
 
+.profile-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
 .profile-menu-overlay {
   position: fixed;
   inset: 0;

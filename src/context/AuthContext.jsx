@@ -37,8 +37,8 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', userId)
-      .single()
+      .eq('id', userId)
+      .maybeSingle()
 
     if (!error && data) {
       setProfile(data)
@@ -69,6 +69,12 @@ export function AuthProvider({ children }) {
     return { error }
   }
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id)
+    }
+  }
+
   const value = {
     user,
     profile,
@@ -76,6 +82,7 @@ export function AuthProvider({ children }) {
     signUp,
     signIn,
     signOut,
+    refreshProfile,
   }
 
   return (
