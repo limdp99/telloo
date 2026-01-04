@@ -156,7 +156,6 @@ UI 시안 위치: `UI/` 폴더 (board.png, ticket_detail.png, board_settings.png
 ### 진행 예정 (우선순위 중간)
 - [x] 검색 기능 ✓
 - [ ] Priority (우선순위) 필드
-- [ ] 구독 기능
 - [ ] 투표자 목록 표시
 - [ ] 댓글 좋아요
 
@@ -226,7 +225,76 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-01 - 4차)
+## 마지막 작업 (2026-01-04 - 2차)
+- 로그인 모달 팝업 구현
+  - 비로그인 상태에서 투표/댓글 좋아요 시 로그인 팝업 표시
+  - Login 버튼 클릭 시 /s/auth로 이동 (redirect 파라미터 포함)
+  - 로그인 후 이전 페이지로 자동 복귀
+- Edge Function CORS 수정
+  - send-notification에 CORS 헤더 추가
+  - OPTIONS preflight 요청 처리
+  - --no-verify-jwt 옵션으로 배포
+- DB FK 관계 수정 (dev 환경)
+  - comment_likes 테이블 생성 및 RLS 정책 추가
+  - feedback_comments.user_id → profiles.id FK 추가
+  - 조인 쿼리에서 명시적 FK 지정 (profiles!fk_feedback_comments_user)
+- UI 개선
+  - 시간 표기 정책: Just now / Xm ago / Xh ago / Xd ago / MMM DD
+  - 목록에서 Trending 정렬 옵션 제거 (기본값: Newest)
+- 수정된 파일:
+  - src/components/FeedbackCard.jsx - 로그인 모달, formatTimeAgo 함수
+  - src/components/FeedbackDetailPanel.jsx - 로그인 모달, FK 명시적 지정
+  - src/pages/Auth.jsx - redirect 파라미터 처리
+  - src/pages/Board.jsx - 정렬 옵션 제거
+  - src/styles/global.css - 로그인 모달 스타일
+  - supabase/functions/send-notification/index.ts - CORS 헤더
+
+### dev 환경 DB 스키마 추가 (이미 실행됨)
+```sql
+-- comment_likes 테이블
+CREATE TABLE IF NOT EXISTS comment_likes (
+  comment_id UUID REFERENCES feedback_comments ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  PRIMARY KEY (comment_id, user_id)
+);
+ALTER TABLE comment_likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read comment likes" ON comment_likes FOR SELECT USING (true);
+CREATE POLICY "Users can insert own likes" ON comment_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own likes" ON comment_likes FOR DELETE USING (auth.uid() = user_id);
+
+-- FK 관계
+ALTER TABLE feedback_comments ADD CONSTRAINT fk_feedback_comments_user FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+ALTER TABLE comment_likes ADD CONSTRAINT fk_comment_likes_user FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
+```
+
+### Edge Function 배포 명령어 (참고)
+```bash
+# Development 환경 배포 (--no-verify-jwt 필수)
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --no-verify-jwt --project-ref kalhnkizplawebgdkcym
+
+# Production 환경 배포
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --no-verify-jwt --project-ref hspgbzgiewlqswoykybf
+```
+
+### Edge Function 환경변수 (dev/prod 모두 설정됨)
+- RESEND_API_KEY
+- FROM_EMAIL (Telloo <notifications@telloo.io>)
+- APP_URL
+- SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+
+## 이전 작업 (2026-01-04 - 1차)
+- 이메일 알림 시스템 개선 및 완성
+  - Subscribe 버튼 제거 (사용자가 수동으로 구독할 필요 없음)
+  - send-notification Edge Function 4가지 자동 알림 케이스로 재구현:
+    - Case 1: 내 글에 댓글 → 글 작성자에게 알림
+    - Case 2: 내 글 상태 변경 → 글 작성자에게 알림
+    - Case 3: 새 글 작성 → 보드 관리자(owner + admin)에게 알림
+    - Case 4: 내가 댓글 단 글에 새 댓글 → 이전 댓글 작성자들에게 알림
+  - FeedbackForm.jsx에 새 글 작성 시 알림 호출 추가
+  - Edge Function 배포 완료 (dev/prod 환경)
+  - 테스트 완료 (이메일 발송 확인)
+
+## 이전 작업 (2026-01-01 - 4차)
 - Priority 필드 구현
   - 관리자가 Low/Medium/High 설정 가능
   - FeedbackCard, FeedbackDetailPanel에서 표시
@@ -243,9 +311,9 @@ ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
   - Pricing 페이지 (/s/pricing)
   - Dashboard에 구독 정보 및 보드 제한 표시
   - Supabase Edge Functions (create-checkout-session, stripe-webhook)
-- 이메일 알림 기능
+- 이메일 알림 기능 (초기 구현)
   - send-notification Edge Function (Resend 사용)
-  - 피드백 구독 기능 (Subscribe 버튼)
+  - 피드백 구독 기능 (Subscribe 버튼) - 이후 제거됨
   - 상태 변경/댓글 추가 시 알림 발송
 
 ## 이전 작업 (2026-01-01 - 3차)
@@ -280,8 +348,17 @@ ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 - .env.development, .env.production 파일 생성
 - Vercel 연동 완료 (자동 배포)
 
+## 다음 작업 (TODO)
+- [ ] Production 환경에 send-notification Edge Function 배포
+- [ ] Production 환경에 Edge Function 환경변수 설정 (RESEND_API_KEY, FROM_EMAIL, APP_URL)
+- [ ] 소셜 로그인 (Google, GitHub)
+- [ ] 팀 멤버 초대/관리
+- [ ] API Access (Business 플랜)
+- [ ] 데이터 내보내기 (CSV)
+
 ## 참고
 - Supabase 대시보드에서 Authentication > Providers > Email > "Confirm email" 옵션 꺼야 함 (dev, prod 둘 다)
 - Vercel 대시보드: https://vercel.com/phillips-projects-602ced67/telloo/settings
 - main에 push → Production 배포
 - dev에 push → Preview 배포
+- Supabase Access Token 생성: https://supabase.com/dashboard/account/tokens
