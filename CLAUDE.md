@@ -225,7 +225,36 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-04 - 2차)
+## 마지막 작업 (2026-01-04 - 3차)
+- 계정 설정 모달 추가 (AccountSettingsModal)
+  - 프로필 드롭다운에 Account 메뉴 추가
+  - 닉네임 변경 기능
+  - 아바타 이미지 업로드/제거 기능
+  - AuthContext에 refreshProfile 함수 추가
+- 아바타 이미지 표시 적용
+  - 우상단 프로필 버튼에 아바타 표시
+  - 댓글 작성자 아바타 표시
+  - 투표자 목록 아바타 표시
+- 댓글 입력창 위치 수정
+  - panel-content 밖으로 분리하여 하단 고정
+  - sticky → flex-shrink: 0 방식으로 변경
+- 댓글 이미지 optimistic 업데이트 수정
+  - base64 프리뷰로 즉시 표시
+  - 업로드 완료 후 실제 URL로 교체
+- Supabase 쿼리 수정
+  - profiles 테이블 조회: user_id → id (PK)
+  - .single() → .maybeSingle() (에러 방지)
+- 수정된 파일:
+  - src/components/AccountSettingsModal.jsx (신규)
+  - src/components/AccountSettingsModal.css (신규)
+  - src/components/FeedbackDetailPanel.jsx
+  - src/components/FeedbackDetailPanel.css
+  - src/context/AuthContext.jsx
+  - src/context/BoardContext.jsx
+  - src/pages/Board.jsx
+  - src/pages/Board.css
+
+## 이전 작업 (2026-01-04 - 2차)
 - 로그인 모달 팝업 구현
   - 비로그인 상태에서 투표/댓글 좋아요 시 로그인 팝업 표시
   - Login 버튼 클릭 시 /s/auth로 이동 (redirect 파라미터 포함)
