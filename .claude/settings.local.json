@@ -25,7 +25,14 @@
       "Bash(vercel env add:*)",
       "Bash(vercel:*)",
       "Bash(cmd //c \"taskkill /PID 13804 /F\")",
-      "Bash(cmd //c \"taskkill /PID 11000 /F\")"
+      "Bash(cmd //c \"taskkill /PID 11000 /F\")",
+      "Bash(supabase --version:*)",
+      "Bash(npx supabase:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_813756c36557526599aacbc412ea4e52c4fcb466 npx supabase link:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_813756c36557526599aacbc412ea4e52c4fcb466 npx supabase secrets set RESEND_API_KEY=re_QPN7X6XL_HM3NoL3oZWs6BRMbJcKnwf2o FROM_EMAIL=\"Telloo <notifications@telloo.io>\" APP_URL=\"https://telloo.io\")",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_813756c36557526599aacbc412ea4e52c4fcb466 npx supabase functions deploy:*)",
+      "Bash(rm:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_813756c36557526599aacbc412ea4e52c4fcb466 npx supabase:*)"
     ]
   }
 }
