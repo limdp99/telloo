@@ -16,12 +16,13 @@ export default function Auth() {
 
   const { signIn, signUp, user } = useAuth()
   const navigate = useNavigate()
+  const redirect = searchParams.get('redirect') || '/s/dashboard'
 
   useEffect(() => {
     if (user) {
-      navigate('/')
+      navigate(redirect)
     }
-  }, [user, navigate])
+  }, [user, navigate, redirect])
 
   useEffect(() => {
     setMode(searchParams.get('mode') || 'login')
@@ -50,7 +51,7 @@ export default function Auth() {
         setError(signUpError.message)
       } else if (data?.user) {
         // 바로 로그인 처리 (이메일 인증 비활성화 시)
-        navigate('/s/dashboard')
+        navigate(redirect)
         return
       }
     } else {
@@ -136,12 +137,12 @@ export default function Auth() {
             {mode === 'login' ? (
               <>
                 Don't have an account?{' '}
-                <Link to="/s/auth?mode=signup">Sign up</Link>
+                <Link to={`/s/auth?mode=signup&redirect=${encodeURIComponent(redirect)}`}>Sign up</Link>
               </>
             ) : (
               <>
                 Already have an account?{' '}
-                <Link to="/s/auth?mode=login">Sign in</Link>
+                <Link to={`/s/auth?mode=login&redirect=${encodeURIComponent(redirect)}`}>Sign in</Link>
               </>
             )}
           </p>

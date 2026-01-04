@@ -123,6 +123,21 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
       }
     }
 
+    // Send notification to board admin for new post
+    if (data?.[0]?.id) {
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            type: 'new_post',
+            postId: data[0].id,
+            triggeredBy: user?.id,
+          }
+        })
+      } catch (error) {
+        console.error('Failed to send notification:', error)
+      }
+    }
+
     onCreated()
   }
 

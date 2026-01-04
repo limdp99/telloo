@@ -67,8 +67,31 @@
 
 .feedback-footer {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+}
+
+.feedback-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.feedback-time {
+  color: var(--text-muted);
+}
+
+.feedback-comments {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.feedback-comments svg {
+  opacity: 0.7;
 }
 
 .feedback-status-row {

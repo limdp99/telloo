@@ -5,15 +5,27 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'Telloo <notifications@telloo.io>'
 const APP_URL = Deno.env.get('APP_URL') || 'https://telloo.io'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 interface NotificationPayload {
-  type: 'new_comment' | 'status_change' | 'new_vote'
+  type: 'new_comment' | 'status_change' | 'new_post'
   postId: string
+  boardId?: string
   triggeredBy?: string
   newStatus?: string
   commentContent?: string
+  postTitle?: string
 }
 
 serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -21,14 +33,14 @@ serve(async (req) => {
     )
 
     const payload: NotificationPayload = await req.json()
-    const { type, postId, triggeredBy, newStatus, commentContent } = payload
+    const { type, postId, boardId, triggeredBy, newStatus, commentContent, postTitle } = payload
 
     // Get post details
     const { data: post, error: postError } = await supabaseAdmin
       .from('feedback_posts')
       .select(`
         *,
-        boards (title, slug)
+        boards (title, slug, owner_id)
       `)
       .eq('id', postId)
       .single()
@@ -37,112 +49,144 @@ serve(async (req) => {
       throw new Error('Post not found')
     }
 
-    // Get subscribers for this post
-    const { data: subscribers } = await supabaseAdmin
-      .from('feedback_subscriptions')
-      .select(`
-        user_id,
-        profiles (nickname),
-        notification_preferences (email_new_comment, email_status_change, email_new_vote)
-      `)
-      .eq('post_id', postId)
-      .neq('user_id', triggeredBy) // Don't notify the person who triggered the action
-
-    if (!subscribers || subscribers.length === 0) {
-      return new Response(JSON.stringify({ sent: 0 }), {
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Get user emails
-    const userIds = subscribers.map(s => s.user_id)
-    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-    const userEmails = users
-      .filter(u => userIds.includes(u.id))
-      .reduce((acc, u) => ({ ...acc, [u.id]: u.email }), {} as Record<string, string>)
-
-    // Filter subscribers based on notification preferences
-    const prefKey = type === 'new_comment' ? 'email_new_comment' :
-                    type === 'status_change' ? 'email_status_change' : 'email_new_vote'
-
-    const eligibleSubscribers = subscribers.filter(s => {
-      const prefs = s.notification_preferences?.[0]
-      return !prefs || prefs[prefKey] !== false // Default to true if no preference set
-    })
-
-    if (eligibleSubscribers.length === 0) {
-      return new Response(JSON.stringify({ sent: 0 }), {
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Build email content
-    let subject = ''
-    let htmlContent = ''
     const postUrl = `${APP_URL}/${post.boards.slug}?post=${post.id}`
+    const emailsToSend: { email: string; subject: string; html: string }[] = []
 
-    switch (type) {
-      case 'new_comment':
-        subject = `New comment on "${post.title}"`
-        htmlContent = `
-          <h2>New comment on your subscribed post</h2>
+    // Helper function to get user email
+    const getUserEmail = async (userId: string): Promise<string | null> => {
+      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
+      const user = users.find(u => u.id === userId)
+      return user?.email || null
+    }
+
+    // Case 1 & 4: New comment notification
+    if (type === 'new_comment') {
+      const recipientIds = new Set<string>()
+
+      // Case 1: Notify post author
+      if (post.user_id && post.user_id !== triggeredBy) {
+        recipientIds.add(post.user_id)
+      }
+
+      // Case 4: Notify previous commenters
+      const { data: previousComments } = await supabaseAdmin
+        .from('feedback_comments')
+        .select('user_id')
+        .eq('post_id', postId)
+        .neq('user_id', triggeredBy)
+
+      if (previousComments) {
+        previousComments.forEach(c => {
+          if (c.user_id && c.user_id !== post.user_id) {
+            recipientIds.add(c.user_id)
+          }
+        })
+      }
+
+      // Build email for each recipient
+      for (const userId of recipientIds) {
+        const email = await getUserEmail(userId)
+        if (!email) continue
+
+        const isPostAuthor = userId === post.user_id
+        const subject = isPostAuthor
+          ? `New comment on your post "${post.title}"`
+          : `New comment on "${post.title}"`
+
+        const htmlContent = `
+          <h2>${isPostAuthor ? 'Someone commented on your post' : 'New comment on a post you commented on'}</h2>
           <p><strong>${post.title}</strong></p>
           <blockquote style="border-left: 3px solid #2dd4bf; padding-left: 12px; margin: 16px 0; color: #666;">
             ${commentContent}
           </blockquote>
           <p><a href="${postUrl}" style="color: #2dd4bf;">View the conversation</a></p>
         `
-        break
 
-      case 'status_change':
-        subject = `Status update: "${post.title}" is now ${newStatus?.replace('_', ' ')}`
-        htmlContent = `
-          <h2>Status Update</h2>
-          <p>The post <strong>"${post.title}"</strong> has been updated to:</p>
-          <p style="font-size: 18px; color: #2dd4bf; font-weight: bold;">${newStatus?.replace('_', ' ').toUpperCase()}</p>
-          <p><a href="${postUrl}" style="color: #2dd4bf;">View the post</a></p>
-        `
-        break
-
-      case 'new_vote':
-        subject = `New vote on "${post.title}"`
-        htmlContent = `
-          <h2>Your post received a vote!</h2>
-          <p><strong>${post.title}</strong></p>
-          <p><a href="${postUrl}" style="color: #2dd4bf;">View the post</a></p>
-        `
-        break
+        emailsToSend.push({
+          email,
+          subject,
+          html: buildEmailTemplate(htmlContent, post.boards.title)
+        })
+      }
     }
 
-    const emailTemplate = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 40px 20px;">
-          <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; border-radius: 12px; padding: 32px; border: 1px solid #333;">
-            <div style="text-align: center; margin-bottom: 24px;">
-              <span style="font-size: 24px; font-weight: bold; color: #2dd4bf;">Telloo</span>
-            </div>
-            ${htmlContent}
-            <hr style="border: none; border-top: 1px solid #333; margin: 24px 0;">
-            <p style="font-size: 12px; color: #666; text-align: center;">
-              You're receiving this because you're subscribed to this post on ${post.boards.title}.
-              <br><a href="${APP_URL}/s/dashboard" style="color: #2dd4bf;">Manage your notification preferences</a>
-            </p>
-          </div>
-        </body>
-      </html>
-    `
+    // Case 2: Status change notification - notify post author
+    if (type === 'status_change') {
+      if (post.user_id && post.user_id !== triggeredBy) {
+        const email = await getUserEmail(post.user_id)
+        if (email) {
+          const subject = `Status update: "${post.title}" is now ${newStatus?.replace('_', ' ')}`
+          const htmlContent = `
+            <h2>Status Update</h2>
+            <p>Your post <strong>"${post.title}"</strong> has been updated to:</p>
+            <p style="font-size: 18px; color: #2dd4bf; font-weight: bold;">${newStatus?.replace('_', ' ').toUpperCase()}</p>
+            <p><a href="${postUrl}" style="color: #2dd4bf;">View the post</a></p>
+          `
+          emailsToSend.push({
+            email,
+            subject,
+            html: buildEmailTemplate(htmlContent, post.boards.title)
+          })
+        }
+      }
+    }
 
-    // Send emails via Resend
+    // Case 3: New post notification - notify board admin
+    if (type === 'new_post') {
+      const boardOwnerId = post.boards.owner_id
+      if (boardOwnerId && boardOwnerId !== triggeredBy) {
+        const email = await getUserEmail(boardOwnerId)
+        if (email) {
+          const subject = `New feedback on ${post.boards.title}: "${post.title}"`
+          const htmlContent = `
+            <h2>New Feedback Submitted</h2>
+            <p>A new post has been submitted to your board <strong>${post.boards.title}</strong>:</p>
+            <p style="font-size: 18px; font-weight: bold;">${post.title}</p>
+            ${post.description ? `<p style="color: #999;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
+            <p><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
+          `
+          emailsToSend.push({
+            email,
+            subject,
+            html: buildEmailTemplate(htmlContent, post.boards.title)
+          })
+        }
+      }
+
+      // Also notify board admins (from user_roles)
+      const { data: boardAdmins } = await supabaseAdmin
+        .from('user_roles')
+        .select('user_id')
+        .eq('board_id', post.board_id)
+        .in('role', ['admin', 'super_admin'])
+        .neq('user_id', triggeredBy)
+        .neq('user_id', boardOwnerId)
+
+      if (boardAdmins) {
+        for (const admin of boardAdmins) {
+          const email = await getUserEmail(admin.user_id)
+          if (email) {
+            const subject = `New feedback on ${post.boards.title}: "${post.title}"`
+            const htmlContent = `
+              <h2>New Feedback Submitted</h2>
+              <p>A new post has been submitted to <strong>${post.boards.title}</strong>:</p>
+              <p style="font-size: 18px; font-weight: bold;">${post.title}</p>
+              ${post.description ? `<p style="color: #999;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
+              <p><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
+            `
+            emailsToSend.push({
+              email,
+              subject,
+              html: buildEmailTemplate(htmlContent, post.boards.title)
+            })
+          }
+        }
+      }
+    }
+
+    // Send all emails via Resend
     let sentCount = 0
-    for (const subscriber of eligibleSubscribers) {
-      const email = userEmails[subscriber.user_id]
-      if (!email) continue
-
+    for (const { email, subject, html } of emailsToSend) {
       try {
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -154,7 +198,7 @@ serve(async (req) => {
             from: FROM_EMAIL,
             to: email,
             subject,
-            html: emailTemplate,
+            html,
           }),
         })
 
@@ -169,13 +213,37 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ sent: sentCount }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Error:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
+
+function buildEmailTemplate(content: string, boardTitle: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 40px 20px;">
+        <div style="max-width: 500px; margin: 0 auto; background: #1a1a1a; border-radius: 12px; padding: 32px; border: 1px solid #333;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <span style="font-size: 24px; font-weight: bold; color: #2dd4bf;">Telloo</span>
+          </div>
+          ${content}
+          <hr style="border: none; border-top: 1px solid #333; margin: 24px 0;">
+          <p style="font-size: 12px; color: #666; text-align: center;">
+            You're receiving this notification from ${boardTitle} on Telloo.
+          </p>
+        </div>
+      </body>
+    </html>
+  `
+}

@@ -36,7 +36,7 @@ export default function Board() {
   const [showForm, setShowForm] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [sortBy, setSortBy] = useState('votes')
+  const [sortBy, setSortBy] = useState('newest')
   const [selectedFeedbackId, setSelectedFeedbackId] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -223,20 +223,6 @@ export default function Board() {
         <div className="container">
           <div className="board-toolbar">
             <div className="toolbar-left">
-              <div className="sort-dropdown">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-                <select
-                  className="sort-select"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                >
-                  <option value="votes">Trending</option>
-                  <option value="newest">Newest</option>
-                  <option value="comments">Most Discussed</option>
-                </select>
-              </div>
               <div className={`search-box ${showSearchInput ? 'active' : ''}`}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                   <circle cx="11" cy="11" r="8" />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
@@ -25,6 +26,8 @@ const PRIORITIES = [
 export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const { user } = useAuth()
   const { userRole } = useBoard()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const [post, setPost] = useState(null)
   const [comments, setComments] = useState([])
@@ -32,7 +35,8 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [showVotersList, setShowVotersList] = useState(false)
-  const [isSubscribed, setIsSubscribed] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginModalMessage, setLoginModalMessage] = useState('')
 
   useEffect(() => {
     if (feedbackId) {
@@ -44,45 +48,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     setLoading(true)
     await fetchPost()
     await fetchComments()
-    if (user) {
-      await fetchSubscription()
-    }
     setLoading(false)
-  }
-
-  const fetchSubscription = async () => {
-    const { data } = await supabase
-      .from('feedback_subscriptions')
-      .select('*')
-      .eq('post_id', feedbackId)
-      .eq('user_id', user.id)
-      .single()
-
-    setIsSubscribed(!!data)
-  }
-
-  const toggleSubscription = async () => {
-    if (!user) {
-      alert('Please login to subscribe')
-      return
-    }
-
-    if (isSubscribed) {
-      await supabase
-        .from('feedback_subscriptions')
-        .delete()
-        .eq('post_id', feedbackId)
-        .eq('user_id', user.id)
-    } else {
-      await supabase
-        .from('feedback_subscriptions')
-        .insert({
-          post_id: feedbackId,
-          user_id: user.id
-        })
-    }
-
-    setIsSubscribed(!isSubscribed)
   }
 
   const sendNotification = async (type, data = {}) => {
@@ -158,7 +124,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
       .from('feedback_comments')
       .select(`
         *,
-        profiles (nickname, avatar_url),
+        profiles!fk_feedback_comments_user (nickname, avatar_url),
         comment_likes (user_id)
       `)
       .eq('post_id', feedbackId)
@@ -175,7 +141,8 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
 
   const handleCommentLike = async (commentId, currentlyLiked) => {
     if (!user) {
-      alert('Please login to like comments')
+      setLoginModalMessage('Please login to like comments.')
+      setShowLoginModal(true)
       return
     }
 
@@ -199,7 +166,8 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
 
   const handleVote = async () => {
     if (!user) {
-      alert('Please login to vote')
+      setLoginModalMessage('Please login to vote on this feedback.')
+      setShowLoginModal(true)
       return
     }
 
@@ -263,7 +231,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     const isAdmin = userRole === 'admin' || userRole === 'super_admin'
     const commentContent = newComment.trim()
 
-    await supabase
+    const { error } = await supabase
       .from('feedback_comments')
       .insert({
         post_id: feedbackId,
@@ -271,6 +239,13 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
         content: commentContent,
         is_admin: isAdmin,
       })
+
+    if (error) {
+      console.error('Comment insert error:', error)
+      alert('Failed to post comment: ' + error.message)
+      setSubmitting(false)
+      return
+    }
 
     // Send notification for new comment
     sendNotification('new_comment', { commentContent })
@@ -284,12 +259,15 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now - date
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffDays = Math.floor(diffHours / 24)
 
-    if (diffDays > 0) return `${diffDays} days ago`
-    if (diffHours > 0) return `${diffHours} hours ago`
-    return 'Just now'
+    if (diffMinutes < 1) return 'Just now'
+    if (diffMinutes < 60) return `${diffMinutes}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   const isAdmin = userRole === 'admin' || userRole === 'super_admin'
@@ -453,22 +431,6 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
 
           <div className="panel-actions">
             <button
-              className={`action-btn ${isSubscribed ? 'subscribed' : ''}`}
-              onClick={toggleSubscription}
-            >
-              {isSubscribed ? (
-                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
-              )}
-              {isSubscribed ? 'Subscribed' : 'Subscribe'}
-            </button>
-            <button
               className={`action-btn upvote ${post.userVote === 'upvote' ? 'active' : ''}`}
               onClick={handleVote}
             >
@@ -557,6 +519,23 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
           </div>
         </div>
       </div>
+
+      {showLoginModal && (
+        <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
+          <div className="login-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Login Required</h3>
+            <p>{loginModalMessage}</p>
+            <div className="login-modal-actions">
+              <button className="btn-secondary" onClick={() => setShowLoginModal(false)}>
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={() => navigate(`/s/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`)}>
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

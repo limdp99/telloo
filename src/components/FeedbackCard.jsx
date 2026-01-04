@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import './FeedbackCard.css'
@@ -18,10 +20,13 @@ const statusLabels = {
 
 export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const handleVote = async (voteType) => {
     if (!user) {
-      alert('Please login to vote')
+      setShowLoginModal(true)
       return
     }
 
@@ -53,12 +58,19 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick })
     onVoteChange()
   }
 
-  const formatDate = (dateString) => {
+  const formatTimeAgo = (dateString) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    })
+    const now = new Date()
+    const diffMs = now - date
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffMinutes < 1) return 'Just now'
+    if (diffMinutes < 60) return `${diffMinutes}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   return (
@@ -104,6 +116,23 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick })
           <span>{post.upvotes}</span>
         </button>
       </div>
+
+      {showLoginModal && (
+        <div className="modal-overlay" onClick={() => setShowLoginModal(false)}>
+          <div className="login-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Login Required</h3>
+            <p>Please login to vote on this feedback.</p>
+            <div className="login-modal-actions">
+              <button className="btn-secondary" onClick={() => setShowLoginModal(false)}>
+                Cancel
+              </button>
+              <button className="btn-primary" onClick={() => navigate(`/s/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`)}>
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
