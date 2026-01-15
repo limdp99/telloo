@@ -94,25 +94,27 @@ npm run dev  # http://localhost:5173 (dev Supabase 연결)
 src/
 ├── lib/supabase.js              # Supabase 클라이언트
 ├── context/
-│   ├── AuthContext.jsx          # 인증 상태 관리
+│   ├── AuthContext.jsx          # 인증 상태 관리 (user, profile, refreshProfile)
 │   └── BoardContext.jsx         # 보드 상태 관리
 ├── pages/
 │   ├── Landing.jsx              # 랜딩 페이지
-│   ├── Auth.jsx                 # 로그인/회원가입
+│   ├── Auth.jsx                 # 로그인/회원가입 (redirect 파라미터 지원)
 │   ├── Dashboard.jsx            # 대시보드
 │   ├── Board.jsx                # 피드백 보드 (메인)
 │   ├── Board.css                # 보드 스타일
-│   ├── FeedbackDetail.jsx       # 피드백 상세 (구버전)
-│   ├── BoardSettings.jsx        # 보드 설정 (구버전)
+│   ├── FeedbackDetail.jsx       # 피드백 상세 (구버전, 사용안함)
+│   ├── BoardSettings.jsx        # 보드 설정 (구버전, 사용안함)
 │   └── NotFound.jsx             # 404
 ├── components/
-│   ├── FeedbackCard.jsx         # 피드백 카드
+│   ├── FeedbackCard.jsx         # 피드백 카드 (로그인 모달 포함)
 │   ├── FeedbackCard.css         # 카드 스타일
-│   ├── FeedbackForm.jsx         # 피드백 작성 폼
+│   ├── FeedbackForm.jsx         # 피드백 작성 폼 (이미지 업로드 지원)
 │   ├── FeedbackDetailPanel.jsx  # 피드백 상세 슬라이드 패널
 │   ├── FeedbackDetailPanel.css  # 패널 스타일
 │   ├── BoardSettingsModal.jsx   # 보드 설정 모달
-│   └── BoardSettingsModal.css   # 모달 스타일
+│   ├── BoardSettingsModal.css   # 모달 스타일
+│   ├── AccountSettingsModal.jsx # 계정 설정 모달 (닉네임/아바타 변경)
+│   └── AccountSettingsModal.css # 계정 설정 스타일
 └── styles/global.css            # 전역 스타일
 ```
 
@@ -155,9 +157,11 @@ UI 시안 위치: `UI/` 폴더 (board.png, ticket_detail.png, board_settings.png
 
 ### 진행 예정 (우선순위 중간)
 - [x] 검색 기능 ✓
-- [ ] Priority (우선순위) 필드
-- [ ] 투표자 목록 표시
-- [ ] 댓글 좋아요
+- [x] Priority (우선순위) 필드 ✓
+- [x] 투표자 목록 표시 ✓
+- [x] 댓글 좋아요 ✓
+- [x] 계정 설정 (닉네임/아바타 변경) ✓
+- [x] 아바타 이미지 표시 (프로필, 댓글, 투표자) ✓
 
 ### DB 스키마 변경 필요
 
@@ -225,34 +229,75 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-04 - 3차)
-- 계정 설정 모달 추가 (AccountSettingsModal)
-  - 프로필 드롭다운에 Account 메뉴 추가
-  - 닉네임 변경 기능
-  - 아바타 이미지 업로드/제거 기능
-  - AuthContext에 refreshProfile 함수 추가
-- 아바타 이미지 표시 적용
-  - 우상단 프로필 버튼에 아바타 표시
-  - 댓글 작성자 아바타 표시
-  - 투표자 목록 아바타 표시
-- 댓글 입력창 위치 수정
-  - panel-content 밖으로 분리하여 하단 고정
-  - sticky → flex-shrink: 0 방식으로 변경
-- 댓글 이미지 optimistic 업데이트 수정
-  - base64 프리뷰로 즉시 표시
-  - 업로드 완료 후 실제 URL로 교체
-- Supabase 쿼리 수정
-  - profiles 테이블 조회: user_id → id (PK)
-  - .single() → .maybeSingle() (에러 방지)
-- 수정된 파일:
-  - src/components/AccountSettingsModal.jsx (신규)
-  - src/components/AccountSettingsModal.css (신규)
-  - src/components/FeedbackDetailPanel.jsx
-  - src/components/FeedbackDetailPanel.css
-  - src/context/AuthContext.jsx
-  - src/context/BoardContext.jsx
-  - src/pages/Board.jsx
-  - src/pages/Board.css
+## 마지막 작업 (2026-01-14 - 세션 3)
+
+### 계정 설정 모달 추가 (AccountSettingsModal)
+- 프로필 드롭다운에 Account 메뉴 추가 (Dashboard와 Logout 사이)
+- 닉네임 변경 기능
+- 아바타 이미지 업로드/제거 기능 (feedback-images 버킷 사용)
+- AuthContext에 refreshProfile 함수 추가 (페이지 리로드 없이 프로필 갱신)
+- 저장 후 refreshProfile() 호출하여 즉시 반영
+
+### 아바타 이미지 표시 적용
+- **우상단 프로필 버튼**: profile?.avatar_url 사용, 없으면 닉네임 첫글자
+- **댓글 작성자**: comment.profiles?.avatar_url 사용
+- **투표자 목록**: voter.avatar_url 사용 (fetchPost에서 avatar_url 조회 추가)
+- **optimistic 업데이트**: 새 댓글에 profile?.avatar_url 포함
+
+### 댓글 입력창 위치 수정
+- 문제: panel-content 안에 있어서 스크롤과 함께 움직임
+- 해결: panel-content 밖으로 분리하여 slide-panel의 직접 자식으로 변경
+- CSS: position: sticky → flex-shrink: 0 방식으로 변경
+
+### 댓글 이미지 optimistic 업데이트 수정
+- 문제: 이미지가 업로드 완료 후에야 표시됨
+- 해결:
+  1. savedImagePreview, savedImageFile을 로컬 변수로 저장
+  2. 폼 먼저 클리어 (UX 개선)
+  3. base64 프리뷰로 optimistic comment 즉시 표시
+  4. 백그라운드에서 이미지 업로드
+  5. DB 저장 후 실제 URL로 교체
+
+### Supabase 쿼리 버그 수정
+- **AuthContext.jsx**: profiles 테이블 조회 시 `.eq('user_id', userId)` → `.eq('id', userId)` (profiles.id가 PK)
+- **BoardContext.jsx**: user_roles 조회 시 `.single()` → `.maybeSingle()` (결과 없을 때 에러 방지)
+- **AuthContext.jsx**: profiles 조회 시 `.single()` → `.maybeSingle()`
+
+### 수정된 파일 상세
+```
+src/components/AccountSettingsModal.jsx (신규)
+  - 닉네임, 아바타 수정 UI
+  - 이미지 업로드 로직 (feedback-images 버킷)
+  - profiles 테이블 upsert 로직
+
+src/components/AccountSettingsModal.css (신규)
+  - 모달 스타일, 아바타 프리뷰, 버튼 스타일
+
+src/components/FeedbackDetailPanel.jsx
+  - useAuth에서 profile 추가
+  - 댓글 아바타 이미지 표시 로직
+  - 투표자 avatar_url 조회 추가
+  - optimistic 업데이트에 avatar_url 포함
+  - 댓글 폼을 panel-content 밖으로 이동
+
+src/components/FeedbackDetailPanel.css
+  - .avatar-img, .voter-avatar-img, .voter-item-avatar-img 스타일 추가
+
+src/context/AuthContext.jsx
+  - fetchProfile: .eq('id', userId), .maybeSingle()
+  - refreshProfile 함수 추가 및 export
+
+src/context/BoardContext.jsx
+  - fetchUserRole: .maybeSingle()
+
+src/pages/Board.jsx
+  - useAuth에서 profile 추가
+  - 프로필 버튼에 avatar_url 표시
+  - Account 메뉴 및 AccountSettingsModal 추가
+
+src/pages/Board.css
+  - .profile-avatar-img 스타일 추가
+```
 
 ## 이전 작업 (2026-01-04 - 2차)
 - 로그인 모달 팝업 구현
@@ -377,7 +422,26 @@ SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --
 - .env.development, .env.production 파일 생성
 - Vercel 연동 완료 (자동 배포)
 
+## 배포 대기 상태
+
+### 현재 브랜치 상태
+- `dev` 브랜치: 최신 작업 완료, 테스트 필요
+- `main` 브랜치: dev 머지 대기 중
+
+### Production 배포 전 체크리스트
+1. [x] dev 브랜치에 모든 변경사항 커밋/푸시 완료
+2. [ ] dev에서 기능 테스트 (아바타 업로드, 댓글 이미지 등)
+3. [ ] main에 머지 (`git checkout main && git merge dev && git push`)
+4. [ ] Vercel에서 Production 배포 확인
+5. [ ] Production 환경 테스트
+
+### Production DB 스키마 확인 필요
+- profiles 테이블에 avatar_url 컬럼 있는지 확인
+- feedback_comments에 image_url 컬럼 있는지 확인
+- comment_likes 테이블 존재 여부 확인
+
 ## 다음 작업 (TODO)
+- [ ] dev → main 머지 후 Production 배포
 - [ ] Production 환경에 send-notification Edge Function 배포
 - [ ] Production 환경에 Edge Function 환경변수 설정 (RESEND_API_KEY, FROM_EMAIL, APP_URL)
 - [ ] 소셜 로그인 (Google, GitHub)
