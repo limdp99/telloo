@@ -674,3 +674,45 @@
   color: var(--text-muted);
   cursor: not-allowed;
 }
+
+/* Image Modal */
+.image-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+  cursor: zoom-out;
+}
+
+.image-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.image-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.image-modal-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}

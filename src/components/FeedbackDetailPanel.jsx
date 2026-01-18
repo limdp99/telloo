@@ -39,6 +39,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const [loginModalMessage, setLoginModalMessage] = useState('')
   const [commentImage, setCommentImage] = useState(null)
   const [commentImagePreview, setCommentImagePreview] = useState(null)
+  const [imageModalUrl, setImageModalUrl] = useState(null)
 
   useEffect(() => {
     if (feedbackId) {
@@ -549,7 +550,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                 <img
                   src={post.image_url}
                   alt="Attachment"
-                  onClick={() => window.open(post.image_url, '_blank')}
+                  onClick={() => setImageModalUrl(post.image_url)}
                 />
               </div>
             )}
@@ -584,7 +585,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                   {comment.content && <p className="comment-text">{comment.content}</p>}
                   {comment.image_url && (
                     <div className="comment-image">
-                      <img src={comment.image_url} alt="Comment attachment" onClick={() => window.open(comment.image_url, '_blank')} />
+                      <img src={comment.image_url} alt="Comment attachment" onClick={() => setImageModalUrl(comment.image_url)} />
                     </div>
                   )}
                   <div className="comment-meta">
@@ -673,6 +674,23 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {imageModalUrl && (
+        <div className="image-modal-overlay" onClick={() => setImageModalUrl(null)}>
+          <button className="image-modal-close" onClick={() => setImageModalUrl(null)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="24" height="24">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+          <img
+            src={imageModalUrl}
+            alt="Full size"
+            className="image-modal-img"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </>

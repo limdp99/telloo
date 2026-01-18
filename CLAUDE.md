@@ -25,6 +25,34 @@
 - `.env.production` - 프로덕션용 (prod Supabase)
 - Vercel 환경변수도 별도 설정됨
 
+## 보안 가이드라인
+
+### 민감 정보 관리
+**절대 코드/파일에 저장하면 안 되는 정보:**
+- Supabase Access Token (`sbp_xxx`)
+- Resend API Key (`re_xxx`)
+- Stripe Secret Key (`sk_xxx`)
+- 기타 모든 API 키/시크릿
+
+### 토큰 사용 시 주의사항
+- CLI에서 토큰 사용 시 사용자가 직접 입력
+- `.claude/settings.local.json`에 토큰 포함된 명령어 패턴 저장 금지
+- 실수로 노출 시 즉시 재발급
+
+### .gitignore 필수 항목
+```
+.env*
+.claude/settings.local.json
+```
+
+### Edge Function 배포 방법
+```bash
+# 사용자가 직접 토큰 입력
+SUPABASE_ACCESS_TOKEN=<사용자입력> npx supabase functions deploy <function-name> --no-verify-jwt --project-ref <project-id>
+```
+- dev project-ref: `kalhnkizplawebgdkcym`
+- prod project-ref: `hspgbzgiewlqswoykybf`
+
 ## 실행 방법
 ```bash
 npm run dev  # http://localhost:5173 (dev Supabase 연결)
