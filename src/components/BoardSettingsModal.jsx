@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useBoard } from '../context/BoardContext'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -16,24 +16,36 @@ const LANGUAGES = [
 ]
 
 const COLOR_THEMES = [
-  '#2dd4bf', // mint
-  '#8b5cf6', // purple
-  '#3b82f6', // blue
+  '#2dd4bf', // teal/mint
+  '#22c55e', // green
+  '#84cc16', // lime
+  '#eab308', // yellow
+  '#f97316', // orange
   '#ef4444', // red
-  '#f59e0b', // amber
+  '#ec4899', // pink
+  '#a855f7', // purple
+  '#8b5cf6', // violet
+  '#6366f1', // indigo
+  '#3b82f6', // blue
+  '#0ea5e9', // sky
 ]
 
 export default function BoardSettingsModal({ onClose }) {
   const { currentBoard, updateBoard } = useBoard()
   const navigate = useNavigate()
+  const logoInputRef = useRef(null)
 
   const [activeMenu, setActiveMenu] = useState('general')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [slug, setSlug] = useState('')
+  const [theme, setTheme] = useState('dark')
   const [accentColor, setAccentColor] = useState('#2dd4bf')
   const [language, setLanguage] = useState('en')
   const [customDomain, setCustomDomain] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
+  const [logoPreview, setLogoPreview] = useState('')
+  const [logoFile, setLogoFile] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -44,11 +56,44 @@ export default function BoardSettingsModal({ onClose }) {
       setTitle(currentBoard.title || '')
       setDescription(currentBoard.description || '')
       setSlug(currentBoard.slug || '')
+      setTheme(currentBoard.theme || 'dark')
       setAccentColor(currentBoard.accent_color || '#2dd4bf')
       setLanguage(currentBoard.language || 'en')
       setCustomDomain(currentBoard.custom_domain || '')
+      setLogoUrl(currentBoard.logo_url || '')
+      setLogoPreview(currentBoard.logo_url || '')
     }
   }, [currentBoard])
+
+  const handleLogoSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only JPEG, PNG, GIF, and WebP images are allowed')
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Image size must be less than 2MB')
+      return
+    }
+
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setLogoPreview(reader.result)
+    reader.readAsDataURL(file)
+    setError('')
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null)
+    setLogoPreview('')
+    setLogoUrl('')
+    if (logoInputRef.current) {
+      logoInputRef.current.value = ''
+    }
+  }
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -65,11 +110,37 @@ export default function BoardSettingsModal({ onClose }) {
     setSaving(true)
     setError('')
 
+    let newLogoUrl = logoUrl
+
+    // Upload new logo if selected
+    if (logoFile) {
+      const fileExt = logoFile.name.split('.').pop()
+      const fileName = `logo-${currentBoard.id}-${Date.now()}.${fileExt}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('feedback-images')
+        .upload(fileName, logoFile)
+
+      if (uploadError) {
+        setError('Failed to upload logo: ' + uploadError.message)
+        setSaving(false)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('feedback-images')
+        .getPublicUrl(fileName)
+
+      newLogoUrl = publicUrl
+    }
+
     const { error: updateError } = await updateBoard(currentBoard.id, {
       title: title.trim(),
       description: description.trim() || null,
       slug: slug,
+      theme: theme,
       accent_color: accentColor,
+      logo_url: newLogoUrl || null,
       custom_domain: customDomain.trim() || null,
     })
 
@@ -148,6 +219,49 @@ export default function BoardSettingsModal({ onClose }) {
 
       <div className="settings-row">
         <div className="settings-label">
+          <span className="label-title">Board Logo</span>
+          <span className="label-desc">Upload a logo for your board</span>
+        </div>
+        <div className="settings-value">
+          <div className="logo-edit-section">
+            <div className="logo-preview" style={{ background: !logoPreview ? accentColor : 'transparent' }}>
+              {logoPreview ? (
+                <img src={logoPreview} alt="Logo" />
+              ) : (
+                <span>{title.charAt(0).toUpperCase() || '?'}</span>
+              )}
+            </div>
+            <div className="logo-actions">
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={handleLogoSelect}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => logoInputRef.current?.click()}
+              >
+                Upload Logo
+              </button>
+              {logoPreview && (
+                <button
+                  type="button"
+                  className="btn-text-danger"
+                  onClick={handleRemoveLogo}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-label">
           <span className="label-title">Board Title</span>
           <span className="label-desc">The name of your feedback board</span>
         </div>
@@ -211,8 +325,45 @@ export default function BoardSettingsModal({ onClose }) {
 
       <div className="settings-row">
         <div className="settings-label">
-          <span className="label-title">Color theme</span>
-          <span className="label-desc">Customize your board's design</span>
+          <span className="label-title">Theme</span>
+          <span className="label-desc">Choose light or dark mode</span>
+        </div>
+        <div className="settings-value">
+          <div className="theme-options">
+            <button
+              className={`theme-option ${theme === 'light' ? 'active' : ''}`}
+              onClick={() => setTheme('light')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+              Light
+            </button>
+            <button
+              className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
+              onClick={() => setTheme('dark')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+              Dark
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-row">
+        <div className="settings-label">
+          <span className="label-title">Accent color</span>
+          <span className="label-desc">Primary color for buttons and links</span>
         </div>
         <div className="settings-value">
           <div className="color-options">

@@ -235,6 +235,7 @@
 .color-options {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
@@ -273,6 +274,103 @@
 .color-picker::-webkit-color-swatch {
   border: 2px solid var(--border);
   border-radius: 50%;
+}
+
+/* Theme Toggle */
+.theme-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-option:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.theme-option.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #0a0a0a;
+}
+
+.theme-option svg {
+  flex-shrink: 0;
+}
+
+/* Logo Upload */
+.logo-edit-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--background);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.logo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-text-danger {
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-text-danger:hover {
+  text-decoration: underline;
 }
 
 .settings-placeholder {

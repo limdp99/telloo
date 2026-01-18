@@ -229,7 +229,125 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-18)
+## 마지막 작업 (2026-01-18 - 세션 2)
+
+### Light/Dark 테마 모드 구현
+보드별로 Light/Dark 모드 선택 가능. 다른 서비스에 임베드될 때 해당 서비스 테마에 맞출 수 있음.
+
+#### 구현 내용
+- **Board.jsx**: `data-theme` 속성 + `--primary` CSS 변수 동적 적용
+- **Board.css**: Light/Dark 모드별 CSS 변수 정의
+  ```css
+  .board-page[data-theme="light"] { --background: #ffffff; --surface: #f9fafb; ... }
+  .board-page[data-theme="dark"] { --background: #0a0a0a; --surface: #141414; ... }
+  ```
+- **BoardSettingsModal.jsx**: Theme 토글 UI 추가 (Light ☀️ / Dark 🌙 버튼)
+- **BoardSettingsModal.css**: `.theme-option` 스타일 추가
+
+#### Primary 색상 동적 생성
+`color-mix()` CSS 함수로 선택한 액센트 컬러에서 파생 색상 자동 생성:
+```css
+--primary-05: color-mix(in srgb, var(--primary) 5%, transparent);
+--primary-10: color-mix(in srgb, var(--primary) 10%, transparent);
+--primary-15: color-mix(in srgb, var(--primary) 15%, transparent);
+--primary-20: color-mix(in srgb, var(--primary) 20%, transparent);
+--primary-hover: color-mix(in srgb, var(--primary) 85%, black);
+```
+
+#### 하드코딩된 색상 제거
+`rgba(45, 212, 191, ...)` → `var(--primary-XX)`로 교체:
+- global.css: `.vote-btn-check.active`
+- FeedbackCard.css: `.vote-btn.active`
+- FeedbackDetailPanel.css: `.action-btn.active`
+- FeedbackForm.css: `.image-upload-btn:hover`
+
+### 액센트 컬러 팔레트 확장
+5개 → 12개 색상으로 확장 (Tailwind CSS 팔레트 기반):
+```javascript
+const COLOR_THEMES = [
+  '#2dd4bf', // teal/mint (기본)
+  '#22c55e', // green
+  '#84cc16', // lime
+  '#eab308', // yellow
+  '#f97316', // orange
+  '#ef4444', // red
+  '#ec4899', // pink
+  '#a855f7', // purple
+  '#8b5cf6', // violet
+  '#6366f1', // indigo
+  '#3b82f6', // blue
+  '#0ea5e9', // sky
+]
+```
+
+### 보드 로고 이미지 비율 유지
+- **문제**: 로고가 80x80 고정 크기로 잘림
+- **해결**: 세로 80px 유지, 가로는 이미지 비율에 맞게 가변
+  ```css
+  .board-logo { min-width: 80px; height: 80px; }
+  .board-logo-img { height: 100%; width: auto; object-fit: contain; }
+  ```
+
+### 이메일 템플릿 색상 수정
+- **문제**: 다크 테마 이메일에서 제목/본문이 검정색으로 안 보임
+- **원인**: 이메일 클라이언트가 `<h2>`, `<strong>` 등에 기본 검정색 적용
+- **해결**: 모든 텍스트 요소에 명시적 색상 지정
+  - `<h2>`: `color: #f5f5f5`
+  - `<strong>`: `color: #f5f5f5`
+  - 본문 `<p>`: `color: #e5e5e5`
+  - 인용/설명: `color: #a3a3a3`
+  - 푸터: `color: #737373`
+- **배포 완료**: dev 환경 (`kalhnkizplawebgdkcym`)
+
+### DB 스키마 변경 필요
+```sql
+-- boards 테이블에 theme 컬럼 추가 (dev/prod 모두 실행 필요)
+ALTER TABLE boards ADD COLUMN theme TEXT DEFAULT 'dark';
+```
+
+### 수정된 파일
+```
+src/pages/Board.jsx
+  - theme, accentColor 변수 추가
+  - data-theme={theme} 속성 추가
+  - style={{ '--primary': accentColor }} 적용
+
+src/pages/Board.css
+  - [data-theme="light"] CSS 변수 정의
+  - [data-theme="dark"] CSS 변수 정의
+  - --primary-05/10/15/20/hover 동적 생성
+  - .board-logo, .board-logo-img 비율 유지 스타일
+
+src/components/BoardSettingsModal.jsx
+  - theme state 추가
+  - useEffect에서 theme 로드
+  - updateBoard에 theme 포함
+  - Theme 토글 UI (Light/Dark 버튼)
+  - COLOR_THEMES 12개로 확장
+
+src/components/BoardSettingsModal.css
+  - .theme-options, .theme-option 스타일
+  - .color-options에 flex-wrap 추가
+
+src/styles/global.css
+  - :root에 --primary-05/10/15/20 fallback 추가
+  - .vote-btn-check.active 색상 변수화
+
+src/components/FeedbackCard.css
+  - .vote-btn.active 색상 변수화
+
+src/components/FeedbackDetailPanel.css
+  - .action-btn.active 색상 변수화
+
+src/components/FeedbackForm.css
+  - .image-upload-btn:hover 색상 변수화
+
+supabase/functions/send-notification/index.ts
+  - 모든 이메일 템플릿에 명시적 색상 추가
+  - h2, strong, p 등에 color 스타일 적용
+```
+
+## 이전 작업 (2026-01-18 - 세션 1)
 
 ### Board Settings 정리
 - **제거된 메뉴**: People and privacy, Feedback board (Coming Soon 상태였음)
@@ -278,24 +396,6 @@ USING (auth.uid() = owner_id);
 | Color theme | ✅ 동작 | DB 저장됨 |
 | Custom Domain | ⚠️ 부분동작 | DB 저장만 됨, 실제 라우팅/Vercel 연동 없음 |
 | Delete Board | ✅ 동작 | RLS 정책 필요 |
-
-### 수정된 파일
-```
-src/components/BoardSettingsModal.jsx
-  - MENU_ITEMS: General, Advanced만 유지
-  - DEFAULT_VIEWS, DEFAULT_SORTS 상수 제거
-  - defaultView, defaultSort state 제거
-  - handleDelete 함수 추가 (직접 supabase 호출)
-  - 삭제 후 window.location.href = '/s/dashboard'
-
-src/components/BoardSettingsModal.css
-  - .delete-board-btn.confirm 스타일
-  - .delete-actions 스타일
-  - .cancel-delete-btn 스타일
-
-src/context/BoardContext.jsx
-  - deleteBoard 함수 추가 (현재 미사용, 참고용)
-```
 
 ## 이전 작업 (2026-01-14 - 세션 3)
 

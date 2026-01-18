@@ -192,7 +192,7 @@
 }
 
 .vote-btn.active {
-  background: rgba(45, 212, 191, 0.15);
+  background: var(--primary-15);
   border-color: var(--primary);
   color: var(--primary);
 }

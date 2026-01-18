@@ -146,8 +146,11 @@ export default function Board() {
 
   const isAdmin = userRole === 'admin' || userRole === 'super_admin'
 
+  const theme = currentBoard?.theme || 'dark'
+  const accentColor = currentBoard?.accent_color || '#2dd4bf'
+
   return (
-    <div className="board-page">
+    <div className="board-page" data-theme={theme} style={{ '--primary': accentColor }}>
       {/* Top Navigation */}
       <nav className="top-nav">
         <div className="top-nav-content">
@@ -220,8 +223,12 @@ export default function Board() {
       <div className="board-header-wrapper">
         <div className="container">
           <div className="board-header-card">
-            <div className="board-logo" style={{ background: currentBoard.accent_color || 'var(--primary)' }}>
-              {currentBoard.title.charAt(0).toUpperCase()}
+            <div className="board-logo" style={{ background: !currentBoard.logo_url ? (currentBoard.accent_color || 'var(--primary)') : 'transparent' }}>
+              {currentBoard.logo_url ? (
+                <img src={currentBoard.logo_url} alt={currentBoard.title} className="board-logo-img" />
+              ) : (
+                currentBoard.title.charAt(0).toUpperCase()
+              )}
             </div>
             <div className="board-info">
               <h1>{currentBoard.title}</h1>

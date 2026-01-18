@@ -96,7 +96,7 @@
 .image-upload-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(45, 212, 191, 0.05);
+  background: var(--primary-05);
 }
 
 .image-preview-container {

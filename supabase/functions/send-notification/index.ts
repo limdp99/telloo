@@ -94,12 +94,12 @@ serve(async (req) => {
           : `New comment on "${post.title}"`
 
         const htmlContent = `
-          <h2>${isPostAuthor ? 'Someone commented on your post' : 'New comment on a post you commented on'}</h2>
-          <p><strong>${post.title}</strong></p>
-          <blockquote style="border-left: 3px solid #2dd4bf; padding-left: 12px; margin: 16px 0; color: #666;">
+          <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">${isPostAuthor ? 'Someone commented on your post' : 'New comment on a post you commented on'}</h2>
+          <p style="color: #f5f5f5; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">${post.title}</p>
+          <blockquote style="border-left: 3px solid #2dd4bf; padding-left: 12px; margin: 16px 0; color: #a3a3a3;">
             ${commentContent}
           </blockquote>
-          <p><a href="${postUrl}" style="color: #2dd4bf;">View the conversation</a></p>
+          <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the conversation</a></p>
         `
 
         emailsToSend.push({
@@ -117,10 +117,10 @@ serve(async (req) => {
         if (email) {
           const subject = `Status update: "${post.title}" is now ${newStatus?.replace('_', ' ')}`
           const htmlContent = `
-            <h2>Status Update</h2>
-            <p>Your post <strong>"${post.title}"</strong> has been updated to:</p>
-            <p style="font-size: 18px; color: #2dd4bf; font-weight: bold;">${newStatus?.replace('_', ' ').toUpperCase()}</p>
-            <p><a href="${postUrl}" style="color: #2dd4bf;">View the post</a></p>
+            <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">Status Update</h2>
+            <p style="color: #e5e5e5; margin: 0 0 12px 0;">Your post <strong style="color: #f5f5f5;">"${post.title}"</strong> has been updated to:</p>
+            <p style="font-size: 18px; color: #2dd4bf; font-weight: bold; margin: 12px 0;">${newStatus?.replace('_', ' ').toUpperCase()}</p>
+            <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the post</a></p>
           `
           emailsToSend.push({
             email,
@@ -139,11 +139,11 @@ serve(async (req) => {
         if (email) {
           const subject = `New feedback on ${post.boards.title}: "${post.title}"`
           const htmlContent = `
-            <h2>New Feedback Submitted</h2>
-            <p>A new post has been submitted to your board <strong>${post.boards.title}</strong>:</p>
-            <p style="font-size: 18px; font-weight: bold;">${post.title}</p>
-            ${post.description ? `<p style="color: #999;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
-            <p><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
+            <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">New Feedback Submitted</h2>
+            <p style="color: #e5e5e5; margin: 0 0 12px 0;">A new post has been submitted to your board <strong style="color: #f5f5f5;">${post.boards.title}</strong>:</p>
+            <p style="font-size: 18px; font-weight: bold; color: #f5f5f5; margin: 12px 0;">${post.title}</p>
+            ${post.description ? `<p style="color: #a3a3a3; margin: 0 0 12px 0;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
+            <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
           `
           emailsToSend.push({
             email,
@@ -168,11 +168,11 @@ serve(async (req) => {
           if (email) {
             const subject = `New feedback on ${post.boards.title}: "${post.title}"`
             const htmlContent = `
-              <h2>New Feedback Submitted</h2>
-              <p>A new post has been submitted to <strong>${post.boards.title}</strong>:</p>
-              <p style="font-size: 18px; font-weight: bold;">${post.title}</p>
-              ${post.description ? `<p style="color: #999;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
-              <p><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
+              <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">New Feedback Submitted</h2>
+              <p style="color: #e5e5e5; margin: 0 0 12px 0;">A new post has been submitted to <strong style="color: #f5f5f5;">${post.boards.title}</strong>:</p>
+              <p style="font-size: 18px; font-weight: bold; color: #f5f5f5; margin: 12px 0;">${post.title}</p>
+              ${post.description ? `<p style="color: #a3a3a3; margin: 0 0 12px 0;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
+              <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
             `
             emailsToSend.push({
               email,
@@ -239,7 +239,7 @@ function buildEmailTemplate(content: string, boardTitle: string): string {
           </div>
           ${content}
           <hr style="border: none; border-top: 1px solid #333; margin: 24px 0;">
-          <p style="font-size: 12px; color: #666; text-align: center;">
+          <p style="font-size: 12px; color: #737373; text-align: center; margin: 0;">
             You're receiving this notification from ${boardTitle} on Telloo.
           </p>
         </div>
