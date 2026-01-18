@@ -229,7 +229,75 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-14 - 세션 3)
+## 마지막 작업 (2026-01-18)
+
+### Board Settings 정리
+- **제거된 메뉴**: People and privacy, Feedback board (Coming Soon 상태였음)
+- **제거된 설정**: Default view, Default sort (UI만 있고 DB 저장/적용 안 됨)
+- **현재 메뉴 구조**: General, Advanced 2개만 유지
+
+### Delete Board 기능 구현
+- **위치**: BoardSettingsModal.jsx > Advanced 탭
+- **동작 방식**:
+  1. Delete Board 버튼 클릭 → "Are you sure?" 확인 메시지 표시
+  2. Yes, Delete 클릭 → 보드 삭제 후 `/s/dashboard`로 이동
+  3. Cancel 클릭 → 취소
+- **중요**: Context의 deleteBoard 사용 안 함 (상태 업데이트로 인한 race condition 방지)
+- **직접 supabase 호출**하여 삭제 후 `window.location.href`로 이동
+
+### Supabase RLS 정책 추가 필요 (boards 테이블)
+```sql
+-- boards 테이블 DELETE 정책 (필수!)
+CREATE POLICY "Users can delete own boards"
+ON boards
+FOR DELETE
+USING (auth.uid() = owner_id);
+```
+**주의**: 이 정책 없으면 삭제 요청이 조용히 무시됨 (에러 없음)
+
+### 라우팅 경로 정리 (App.jsx)
+| 경로 | 컴포넌트 | 설명 |
+|------|----------|------|
+| `/` | Landing | 랜딩 페이지 |
+| `/s/auth` | Auth | 로그인/회원가입 |
+| `/s/dashboard` | Dashboard | 대시보드 (내 보드 목록) |
+| `/404` | NotFound | 404 페이지 |
+| `/:slug` | Board | 보드 페이지 (동적) |
+| `/:slug/feedback/:feedbackId` | FeedbackDetail | 피드백 상세 (구버전) |
+| `/:slug/settings` | BoardSettings | 보드 설정 (구버전) |
+
+**중요**: `/dashboard`가 아니라 `/s/dashboard`임! 잘못된 경로 사용 시 `/:slug`로 매칭되어 404 발생
+
+### Board Settings 미동작 기능 정리
+| 설정 | 상태 | 설명 |
+|------|------|------|
+| Board Title | ✅ 동작 | DB 저장됨 |
+| Board URL (slug) | ✅ 동작 | DB 저장됨, 변경 시 리다이렉트 |
+| Description | ✅ 동작 | DB 저장됨 |
+| Language | ❌ 미동작 | UI만 있음, DB 저장 안 됨 |
+| Color theme | ✅ 동작 | DB 저장됨 |
+| Custom Domain | ⚠️ 부분동작 | DB 저장만 됨, 실제 라우팅/Vercel 연동 없음 |
+| Delete Board | ✅ 동작 | RLS 정책 필요 |
+
+### 수정된 파일
+```
+src/components/BoardSettingsModal.jsx
+  - MENU_ITEMS: General, Advanced만 유지
+  - DEFAULT_VIEWS, DEFAULT_SORTS 상수 제거
+  - defaultView, defaultSort state 제거
+  - handleDelete 함수 추가 (직접 supabase 호출)
+  - 삭제 후 window.location.href = '/s/dashboard'
+
+src/components/BoardSettingsModal.css
+  - .delete-board-btn.confirm 스타일
+  - .delete-actions 스타일
+  - .cancel-delete-btn 스타일
+
+src/context/BoardContext.jsx
+  - deleteBoard 함수 추가 (현재 미사용, 참고용)
+```
+
+## 이전 작업 (2026-01-14 - 세션 3)
 
 ### 계정 설정 모달 추가 (AccountSettingsModal)
 - 프로필 드롭다운에 Account 메뉴 추가 (Dashboard와 Logout 사이)

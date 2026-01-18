@@ -108,6 +108,21 @@ export function BoardProvider({ children }) {
     return { data, error }
   }
 
+  const deleteBoard = async (boardId) => {
+    const { error } = await supabase
+      .from('boards')
+      .delete()
+      .eq('id', boardId)
+
+    if (!error) {
+      setBoards(boards.filter(b => b.id !== boardId))
+      if (currentBoard?.id === boardId) {
+        setCurrentBoard(null)
+      }
+    }
+    return { error }
+  }
+
   const value = {
     boards,
     currentBoard,
@@ -117,6 +132,7 @@ export function BoardProvider({ children }) {
     fetchBoardBySlug,
     createBoard,
     updateBoard,
+    deleteBoard,
     setCurrentBoard,
   }
 

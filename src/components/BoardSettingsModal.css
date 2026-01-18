@@ -372,6 +372,43 @@
   color: white;
 }
 
+.delete-board-btn.confirm {
+  background: var(--error);
+  color: white;
+}
+
+.delete-board-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cancel-delete-btn {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-delete-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.cancel-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .settings-modal {
     width: 95%;

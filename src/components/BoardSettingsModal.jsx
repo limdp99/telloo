@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useBoard } from '../context/BoardContext'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
 import './BoardSettingsModal.css'
 
 const MENU_ITEMS = [
   { id: 'general', label: 'General', icon: 'settings' },
-  { id: 'people', label: 'People and privacy', icon: 'people' },
-  { id: 'feedback', label: 'Feedback board', icon: 'feedback' },
   { id: 'advanced', label: 'Advanced', icon: 'advanced' },
 ]
 
@@ -24,17 +23,6 @@ const COLOR_THEMES = [
   '#f59e0b', // amber
 ]
 
-const DEFAULT_VIEWS = [
-  { value: 'feedback', label: 'Feedback' },
-  { value: 'roadmap', label: 'Roadmap' },
-]
-
-const DEFAULT_SORTS = [
-  { value: 'trending', label: 'Trending' },
-  { value: 'newest', label: 'Newest' },
-  { value: 'most_votes', label: 'Most Votes' },
-]
-
 export default function BoardSettingsModal({ onClose }) {
   const { currentBoard, updateBoard } = useBoard()
   const navigate = useNavigate()
@@ -45,9 +33,9 @@ export default function BoardSettingsModal({ onClose }) {
   const [slug, setSlug] = useState('')
   const [accentColor, setAccentColor] = useState('#2dd4bf')
   const [language, setLanguage] = useState('en')
-  const [defaultView, setDefaultView] = useState('feedback')
-  const [defaultSort, setDefaultSort] = useState('trending')
   const [customDomain, setCustomDomain] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -58,8 +46,6 @@ export default function BoardSettingsModal({ onClose }) {
       setSlug(currentBoard.slug || '')
       setAccentColor(currentBoard.accent_color || '#2dd4bf')
       setLanguage(currentBoard.language || 'en')
-      setDefaultView(currentBoard.default_view || 'feedback')
-      setDefaultSort(currentBoard.default_sort || 'trending')
       setCustomDomain(currentBoard.custom_domain || '')
     }
   }, [currentBoard])
@@ -106,6 +92,29 @@ export default function BoardSettingsModal({ onClose }) {
     onClose()
   }
 
+  const handleDelete = async () => {
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true)
+      return
+    }
+
+    setDeleting(true)
+
+    const { error: deleteError } = await supabase
+      .from('boards')
+      .delete()
+      .eq('id', currentBoard.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+      return
+    }
+
+    window.location.href = '/s/dashboard'
+  }
+
   const renderIcon = (icon) => {
     switch (icon) {
       case 'settings':
@@ -113,21 +122,6 @@ export default function BoardSettingsModal({ onClose }) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        )
-      case 'people':
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-        )
-      case 'feedback':
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
         )
       case 'advanced':
@@ -240,65 +234,6 @@ export default function BoardSettingsModal({ onClose }) {
         </div>
       </div>
 
-      <div className="settings-row">
-        <div className="settings-label">
-          <span className="label-title">Default view</span>
-          <span className="label-desc">When someone opens your board</span>
-        </div>
-        <div className="settings-value">
-          <select
-            className="settings-select"
-            value={defaultView}
-            onChange={(e) => setDefaultView(e.target.value)}
-          >
-            {DEFAULT_VIEWS.map(view => (
-              <option key={view.value} value={view.value}>{view.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="settings-row">
-        <div className="settings-label">
-          <span className="label-title">Default sort order</span>
-          <span className="label-desc">How posts are sorted by default</span>
-        </div>
-        <div className="settings-value">
-          <select
-            className="settings-select"
-            value={defaultSort}
-            onChange={(e) => setDefaultSort(e.target.value)}
-          >
-            {DEFAULT_SORTS.map(sort => (
-              <option key={sort.value} value={sort.value}>{sort.label}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderPeopleSettings = () => (
-    <div className="settings-content">
-      <h2 className="settings-section-title">
-        {renderIcon('people')}
-        People and privacy
-      </h2>
-      <div className="settings-placeholder">
-        <p>Team member management coming soon.</p>
-      </div>
-    </div>
-  )
-
-  const renderFeedbackSettings = () => (
-    <div className="settings-content">
-      <h2 className="settings-section-title">
-        {renderIcon('feedback')}
-        Feedback board
-      </h2>
-      <div className="settings-placeholder">
-        <p>Feedback board settings coming soon.</p>
-      </div>
     </div>
   )
 
@@ -350,10 +285,29 @@ export default function BoardSettingsModal({ onClose }) {
       <div className="settings-row danger-zone">
         <div className="settings-label">
           <span className="label-title danger">Delete Board</span>
-          <span className="label-desc">Permanently delete this board and all its data</span>
+          <span className="label-desc">
+            {showDeleteConfirm
+              ? 'Are you sure? This action cannot be undone.'
+              : 'Permanently delete this board and all its data'}
+          </span>
         </div>
-        <div className="settings-value">
-          <button className="delete-board-btn">Delete Board</button>
+        <div className="settings-value delete-actions">
+          {showDeleteConfirm && (
+            <button
+              className="cancel-delete-btn"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            className={`delete-board-btn ${showDeleteConfirm ? 'confirm' : ''}`}
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting...' : showDeleteConfirm ? 'Yes, Delete' : 'Delete Board'}
+          </button>
         </div>
       </div>
     </div>
@@ -363,10 +317,6 @@ export default function BoardSettingsModal({ onClose }) {
     switch (activeMenu) {
       case 'general':
         return renderGeneralSettings()
-      case 'people':
-        return renderPeopleSettings()
-      case 'feedback':
-        return renderFeedbackSettings()
       case 'advanced':
         return renderAdvancedSettings()
       default:
