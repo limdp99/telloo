@@ -155,7 +155,7 @@ export default function Board() {
       <nav className="top-nav">
         <div className="top-nav-content">
           <div className="top-nav-left">
-            <Link to="/dashboard" className="nav-logo">Telloo</Link>
+            <Link to="/s/dashboard" className="nav-logo">Telloo</Link>
           </div>
           <div className="top-nav-right">
             {isAdmin && (
@@ -185,7 +185,7 @@ export default function Board() {
                         <span className="profile-email">{user.email}</span>
                       </div>
                       <div className="profile-menu-divider" />
-                      <Link to="/dashboard" className="profile-menu-item">
+                      <Link to="/s/dashboard" className="profile-menu-item">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                         </svg>
@@ -211,7 +211,7 @@ export default function Board() {
                 )}
               </div>
             ) : (
-              <Link to="/s/auth" className="nav-link">
+              <Link to={`/s/auth?redirect=${encodeURIComponent('/' + slug)}`} className="nav-link">
                 Login
               </Link>
             )}

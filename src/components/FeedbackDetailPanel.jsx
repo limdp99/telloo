@@ -654,7 +654,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
             </form>
           ) : (
             <div className="login-prompt">
-              Login to leave a comment
+              <a href={`/s/auth?redirect=${encodeURIComponent(location.pathname + location.search)}`}>Login</a> to leave a comment
             </div>
           )}
         </div>

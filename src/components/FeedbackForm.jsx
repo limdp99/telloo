@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import './FeedbackForm.css'
@@ -14,6 +15,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export default function FeedbackForm({ boardId, onClose, onCreated }) {
   const { user, profile } = useAuth()
+  const location = useLocation()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('feature_request')
@@ -248,7 +250,7 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
             </div>
           ) : (
             <p className="login-hint">
-              <a href="/s/auth">Login</a> to attach images and vote on feedback
+              <a href={`/s/auth?redirect=${encodeURIComponent(location.pathname)}`}>Login</a> to attach images and vote on feedback
             </p>
           )}
 
