@@ -9,31 +9,32 @@
 .board-page {
   min-height: 100vh;
   background: var(--background);
+  color: var(--text);
 }
 
 /* Theme: Light Mode */
 .board-page[data-theme="light"] {
-  --background: #ffffff;
-  --surface: #f9fafb;
-  --surface-hover: #f3f4f6;
+  --background: #f5f5f7;
+  --surface: #ffffff;
+  --surface-hover: #efefef;
   --surface-elevated: #ffffff;
-  --border: #e5e7eb;
-  --border-light: #d1d5db;
-  --text: #111827;
+  --border: #dcdcde;
+  --border-light: #c8c8cc;
+  --text: #1a1a1a;
   --text-muted: #6b7280;
   --text-secondary: #4b5563;
 }
 
 /* Theme: Dark Mode */
 .board-page[data-theme="dark"] {
-  --background: #0a0a0a;
-  --surface: #141414;
-  --surface-hover: #1f1f1f;
-  --surface-elevated: #1a1a1a;
-  --border: #262626;
-  --border-light: #333333;
+  --background: #181818;
+  --surface: #222222;
+  --surface-hover: #2a2a2a;
+  --surface-elevated: #262626;
+  --border: #333333;
+  --border-light: #3d3d3d;
   --text: #f5f5f5;
-  --text-muted: #737373;
+  --text-muted: #888888;
   --text-secondary: #a3a3a3;
 }
 
