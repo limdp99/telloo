@@ -1,9 +1,53 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import './Landing.css'
+
+const DEMO_BOARD_ID = 'deadbeef-0000-0000-0000-000000000000'
+
+const STATUS_LABELS = {
+  under_review: 'Under Review',
+  planned: 'Planned',
+  in_progress: 'In Progress',
+  completed: 'Completed',
+}
+
+const CATEGORY_LABELS = {
+  feature_request: 'Feature',
+  bug_report: 'Bug',
+  improvement: 'Improvement',
+}
 
 export default function Landing() {
   const { user, signOut } = useAuth()
+  const [demoPosts, setDemoPosts] = useState([])
+
+  useEffect(() => {
+    fetchDemoPosts()
+  }, [])
+
+  const fetchDemoPosts = async () => {
+    const { data } = await supabase
+      .from('feedback_posts')
+      .select(`
+        *,
+        feedback_votes (vote_type),
+        feedback_comments (count)
+      `)
+      .eq('board_id', DEMO_BOARD_ID)
+      .order('created_at', { ascending: false })
+      .limit(4)
+
+    if (data) {
+      const postsWithVotes = data.map(post => ({
+        ...post,
+        upvotes: post.feedback_votes?.filter(v => v.vote_type === 'upvote').length || 0,
+        commentCount: post.feedback_comments?.[0]?.count || 0,
+      }))
+      setDemoPosts(postsWithVotes)
+    }
+  }
 
   return (
     <div className="landing">
@@ -12,6 +56,7 @@ export default function Landing() {
           <nav className="landing-nav">
             <Link to="/" className="logo">Telloo</Link>
             <div className="nav-links">
+              <a href="#pricing" className="btn btn-ghost">Pricing</a>
               {user ? (
                 <>
                   <Link to="/s/dashboard" className="btn btn-ghost">Dashboard</Link>
@@ -75,9 +120,58 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="pricing">
+        <section className="demo-preview">
+          <div className="container">
+            <h2>See it in action</h2>
+            <p className="section-subtitle">Real feedback from our demo board</p>
+
+            {demoPosts.length > 0 ? (
+              <div className="demo-cards">
+                {demoPosts.map(post => (
+                  <Link to="/demo" key={post.id} className="demo-card">
+                    <div className="demo-card-header">
+                      <span className={`demo-badge demo-badge-${post.category}`}>
+                        {CATEGORY_LABELS[post.category] || post.category}
+                      </span>
+                      <span className={`demo-status demo-status-${post.status}`}>
+                        {STATUS_LABELS[post.status] || post.status}
+                      </span>
+                    </div>
+                    <h3>{post.title}</h3>
+                    <p>{post.description?.slice(0, 100)}{post.description?.length > 100 ? '...' : ''}</p>
+                    <div className="demo-card-footer">
+                      <span className="demo-votes">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        {post.upvotes}
+                      </span>
+                      <span className="demo-comments">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        {post.commentCount}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="demo-loading">Loading demo...</div>
+            )}
+
+            <div className="demo-cta">
+              <Link to="/demo" className="btn btn-secondary btn-lg">
+                Explore Demo Board
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="pricing" id="pricing">
           <div className="container">
             <h2>Simple Pricing</h2>
+            <p className="section-subtitle">Start free, upgrade when you need more</p>
             <div className="pricing-grid">
               <div className="pricing-card">
                 <h3>Free</h3>
@@ -115,11 +209,21 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+        <section className="cta">
+          <div className="container">
+            <h2>Start collecting feedback today</h2>
+            <p>Free forever for 1 board. No credit card required.</p>
+            <Link to="/s/auth?mode=signup" className="btn btn-primary btn-lg">
+              Get Started Free
+            </Link>
+          </div>
+        </section>
       </main>
 
       <footer className="landing-footer">
         <div className="container">
-          <p>&copy; 2024 Telloo. All rights reserved.</p>
+          <p>&copy; 2026 Telloo. All rights reserved.</p>
         </div>
       </footer>
     </div>
