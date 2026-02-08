@@ -257,7 +257,165 @@ ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
 ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
 ```
 
-## 마지막 작업 (2026-01-18 - 세션 2)
+## 마지막 작업 (2026-02-08)
+
+### 데모 보드 시드 데이터 생성
+랜딩 페이지 "View Demo" 버튼용 데모 보드 및 샘플 데이터.
+
+#### 파일 위치
+`supabase/seed-demo.sql`
+
+#### 실행 방법
+Supabase SQL Editor에서 직접 실행 (dev 환경 완료, prod 필요시 실행)
+
+#### 데이터 구성
+- **Board**: Acme Software (slug: `demo`, id: `deadbeef-0000-0000-0000-000000000000`)
+- **Posts**: 12개 (다양한 카테고리/상태)
+  - feature_request: 7개
+  - bug_report: 3개
+  - improvement: 2개
+- **Comments**: 21개 (일부 is_admin=true로 관리자 응답 포함)
+- **Votes**: 없음 (user_id 필요하므로 스킵, 사용자가 직접 투표 가능)
+
+#### 스키마 자동 변경 (seed SQL 내 포함)
+seed 파일 실행 시 자동으로 필요한 컬럼 추가됨:
+```sql
+ALTER TABLE boards ALTER COLUMN owner_id DROP NOT NULL;  -- 데모 보드용
+ALTER TABLE feedback_comments ALTER COLUMN user_id DROP NOT NULL;  -- 익명 댓글용
+ALTER TABLE boards ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark';
+ALTER TABLE boards ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'empty';
+ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS ticket_number INTEGER;
+```
+
+#### UUID 형식 주의
+PostgreSQL UUID는 16진수만 허용 (0-9, a-f). 'demo', 'd3m0' 같은 문자 사용 불가.
+→ `deadbeef-xxxx-xxxx-xxxx-xxxxxxxxxxxx` 형식 사용
+
+### 로그인 리다이렉트 수정
+보드에서 가입/로그인 후 대시보드가 아닌 원래 보드로 돌아가도록 수정.
+
+#### 수정된 파일
+```
+src/pages/Board.jsx
+  - Login 링크: /s/auth → /s/auth?redirect=/{slug}
+  - Dashboard 링크: /dashboard → /s/dashboard (버그 수정)
+  - Telloo 로고: /dashboard → /s/dashboard (버그 수정)
+
+src/components/FeedbackForm.jsx
+  - 로그인 힌트 링크에 redirect 파라미터 추가
+
+src/components/FeedbackDetailPanel.jsx
+  - 로그인 프롬프트에 redirect 파라미터 추가
+```
+
+### 이미지 라이트박스 모달
+첨부 이미지 클릭 시 새 탭 대신 모달로 표시.
+
+#### 수정된 파일
+```
+src/components/FeedbackDetailPanel.jsx
+  - imageModalUrl state 추가
+  - window.open() → setImageModalUrl() 변경
+  - 이미지 모달 오버레이 JSX 추가
+
+src/components/FeedbackDetailPanel.css
+  - .image-modal-overlay: 전체화면 어두운 배경
+  - .image-modal-close: 우상단 X 버튼
+  - .image-modal-img: 중앙 정렬, max 90vw/90vh
+```
+
+### 다크 테마 밝기 조정 (메인 사이트)
+사용자 피드백: "너무 어둡다"
+
+#### 변경 내용 (global.css + Board.css)
+| 변수 | 이전 | 변경 후 |
+|------|------|---------|
+| --background | #0a0a0a (4%) | #181818 (9%) |
+| --surface | #141414 (8%) | #222222 (13%) |
+| --surface-hover | #1f1f1f (12%) | #2a2a2a (16%) |
+| --surface-elevated | #1a1a1a (10%) | #262626 (15%) |
+| --border | #262626 (15%) | #333333 (20%) |
+| --border-light | #333333 (20%) | #3d3d3d (24%) |
+| --text-muted | #737373 (45%) | #888888 (53%) |
+
+#### 수정된 파일
+```
+src/styles/global.css (:root)
+src/pages/Board.css (.board-page[data-theme="dark"])
+```
+
+### 라이트 테마 조정 (보드 페이지)
+사용자 피드백: "너무 눈부시다"
+
+#### 변경 내용 (Board.css)
+| 변수 | 이전 | 변경 후 |
+|------|------|---------|
+| --background | #ffffff | #f5f5f7 (Apple 스타일 오프화이트) |
+| --surface | #f9fafb | #ffffff (카드는 순백) |
+| --surface-hover | #f3f4f6 | #efefef |
+| --border | #e5e7eb | #dcdcde |
+| --border-light | #d1d5db | #c8c8cc |
+| --text | #111827 | #1a1a1a |
+
+### 라이트 테마 텍스트 색상 수정
+**문제**: 라이트 테마에서 티켓 상세 타이틀/본문이 안 보임
+**원인**: body의 `color: var(--text)` 계산 값이 다크 테마 값(#f5f5f5)으로 상속됨
+**해결**: `.board-page`에 `color: var(--text)` 명시적 추가
+
+```css
+.board-page {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text);  /* 추가됨 */
+}
+```
+
+### 커밋 히스토리 (이번 세션)
+```
+db13cc7 feat: Fix login redirects and add demo board seed data
+60265e6 feat: Add image lightbox modal for attachments
+696e254 feat: Add Light/Dark theme mode and expand color palette
+```
+
+---
+
+## 다음 작업 (TODO - 긴급)
+
+### 랜딩 페이지 개선
+현재 구조: Hero → Features → **Pricing** → Footer
+
+#### 계획
+1. **Pricing을 nav 링크로 분리**
+   - 상단 nav에 "Pricing" 링크 추가
+   - 별도 섹션(앵커) 또는 페이지로 이동
+
+2. **라이브 데모 프리뷰 섹션 추가** (Pricing 자리)
+   - 데모 보드의 피드백 카드 3~4개 실제 표시
+   - Supabase에서 데모 보드 데이터 fetch
+   - 클릭 시 `/demo`로 이동
+   - "See it in action" 느낌
+
+3. **CTA 섹션 추가** (푸터 위)
+   - "Start collecting feedback today"
+   - Get Started 버튼
+
+#### 구현 예정 파일
+```
+src/pages/Landing.jsx
+  - nav에 Pricing 링크 추가
+  - pricing 섹션 → DemoPreview 섹션으로 교체
+  - CTA 섹션 추가
+  - useEffect로 데모 보드 데이터 fetch
+
+src/pages/Landing.css
+  - .demo-preview 섹션 스타일
+  - .cta-section 스타일
+```
+
+---
+
+## 이전 작업 (2026-01-18 - 세션 2)
 
 ### Light/Dark 테마 모드 구현
 보드별로 Light/Dark 모드 선택 가능. 다른 서비스에 임베드될 때 해당 서비스 테마에 맞출 수 있음.
@@ -618,28 +776,64 @@ SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --
 - .env.development, .env.production 파일 생성
 - Vercel 연동 완료 (자동 배포)
 
-## 배포 대기 상태
+## 배포 상태
 
 ### 현재 브랜치 상태
-- `dev` 브랜치: 최신 작업 완료, 테스트 필요
+- `dev` 브랜치: 최신 작업 완료 (2026-02-08)
 - `main` 브랜치: dev 머지 대기 중
+
+### 최근 커밋 (dev)
+```
+db13cc7 feat: Fix login redirects and add demo board seed data
+60265e6 feat: Add image lightbox modal for attachments
+696e254 feat: Add Light/Dark theme mode and expand color palette
+1f0074b feat: Add delete board functionality and cleanup settings
+```
 
 ### Production 배포 전 체크리스트
 1. [x] dev 브랜치에 모든 변경사항 커밋/푸시 완료
-2. [ ] dev에서 기능 테스트 (아바타 업로드, 댓글 이미지 등)
+2. [ ] dev Preview에서 기능 테스트
+   - [ ] 데모 보드 확인 (/demo)
+   - [ ] 라이트/다크 테마 전환
+   - [ ] 이미지 모달
+   - [ ] 로그인 리다이렉트
 3. [ ] main에 머지 (`git checkout main && git merge dev && git push`)
 4. [ ] Vercel에서 Production 배포 확인
-5. [ ] Production 환경 테스트
+5. [ ] Production Supabase에 seed-demo.sql 실행 (필요시)
 
 ### Production DB 스키마 확인 필요
-- profiles 테이블에 avatar_url 컬럼 있는지 확인
-- feedback_comments에 image_url 컬럼 있는지 확인
-- comment_likes 테이블 존재 여부 확인
+```sql
+-- 아래 컬럼/테이블이 있는지 확인 후 없으면 추가
+ALTER TABLE boards ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark';
+ALTER TABLE boards ADD COLUMN IF NOT EXISTS logo_url TEXT;
+ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'empty';
+ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS ticket_number INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE feedback_comments ADD COLUMN IF NOT EXISTS image_url TEXT;
+
+-- comment_likes 테이블
+CREATE TABLE IF NOT EXISTS comment_likes (
+  comment_id UUID REFERENCES feedback_comments ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  PRIMARY KEY (comment_id, user_id)
+);
+```
 
 ## 다음 작업 (TODO)
+
+### 즉시 (현재 세션 또는 다음 세션)
+- [ ] 랜딩 페이지 개선 (위 "다음 작업 - 긴급" 참조)
+  - Pricing → nav 링크로 분리
+  - 라이브 데모 프리뷰 섹션 추가
+  - CTA 섹션 추가
+- [ ] 테마 색상 변경사항 커밋/푸시
+
+### 단기
 - [ ] dev → main 머지 후 Production 배포
 - [ ] Production 환경에 send-notification Edge Function 배포
-- [ ] Production 환경에 Edge Function 환경변수 설정 (RESEND_API_KEY, FROM_EMAIL, APP_URL)
+- [ ] Production 환경에 Edge Function 환경변수 설정
+
+### 중기
 - [ ] 소셜 로그인 (Google, GitHub)
 - [ ] 팀 멤버 초대/관리
 - [ ] API Access (Business 플랜)
