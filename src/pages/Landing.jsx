@@ -37,7 +37,7 @@ export default function Landing() {
       `)
       .eq('board_id', DEMO_BOARD_ID)
       .order('created_at', { ascending: false })
-      .limit(4)
+      .limit(6)
 
     if (data) {
       const postsWithVotes = data.map(post => ({
