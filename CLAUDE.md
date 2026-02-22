@@ -5,20 +5,27 @@
 
 ## 기술 스택
 - React 18 + Vite
-- Supabase (인증, DB)
+- Supabase (인증, DB, Storage, Edge Functions)
 - React Router v7
+- Stripe (결제)
+- Resend (이메일)
 
 ## 환경 구성
 
 ### Git 브랜치
-- `main` - 프로덕션 (Vercel 자동 배포)
-- `dev` - 개발용 (Preview 배포)
+- `main` - 유일한 작업 브랜치 (Vercel Production 자동 배포)
+- `dev` - 더 이상 사용하지 않음 (2026-02-22부터)
+
+### 배포
+- **main에 push하면 Vercel이 자동으로 Production 배포** (정상 작동 확인됨)
+- Vercel 대시보드: https://vercel.com/phillips-projects-602ced67/telloo/settings
+- Production URL: https://telloo.vercel.app
 
 ### 환경별 설정
-| 환경 | Supabase Project ID | Vercel URL |
-|------|---------------------|------------|
+| 환경 | Supabase Project ID | URL |
+|------|---------------------|-----|
 | Production | hspgbzgiewlqswoykybf | https://telloo.vercel.app |
-| Development | kalhnkizplawebgdkcym | Preview URL (자동 생성) |
+| Development | kalhnkizplawebgdkcym | localhost:5173 |
 
 ### 환경 파일
 - `.env.development` - 로컬 개발용 (dev Supabase)
@@ -80,56 +87,60 @@ npm run dev  # http://localhost:5173 (dev Supabase 연결)
 - [x] 익명 제출 지원
 
 ### 투표
-- [x] Upvote / Downvote
+- [x] Upvote (체크마크 스타일)
 - [x] 투표 취소/변경
-- [x] 비로그인시 로그인 유도
+- [x] 비로그인시 로그인 유도 (모달 팝업)
 
 ### 피드백 상세
-- [x] 상세 내용 표시
+- [x] 상세 내용 표시 (슬라이드 패널)
 - [x] 댓글 목록
 - [x] 댓글 작성 (로그인 필요)
 - [x] 관리자 댓글 표시 (Admin 뱃지)
 - [x] 관리자 상태 변경
+- [x] 이미지 라이트박스 모달
 
 ### 보드 설정
 - [x] 제목/설명 수정
-- [x] URL slug 변경
-- [x] 액센트 컬러 변경
+- [x] URL slug 변경 (예약어 검증 포함)
+- [x] 액센트 컬러 변경 (12색 팔레트)
+- [x] Light/Dark 테마 전환
+- [x] 보드 삭제
+- [x] 커스텀 도메인 (DB 저장만, 실제 라우팅 미구현)
+
+### 추가 기능
+- [x] 결제 시스템 (Stripe 연동)
+- [x] 이미지 업로드 (피드백 + 댓글)
+- [x] 이메일 알림 (새 피드백, 상태 변경, 댓글)
+- [x] 피드백 검색
+- [x] Priority 필드
+- [x] 투표자 목록 표시
+- [x] 댓글 좋아요
+- [x] 계정 설정 (닉네임/아바타 변경)
+- [x] 티켓 번호 시스템
 
 ## 미구현 기능 (TODO)
 
-### 우선순위 높음
-- [x] 결제 시스템 (Stripe 연동) ✓
-  - Free: 1 보드
-  - Pro ($19.99): 3 보드 + 커스텀 브랜딩
-  - Business ($59.99): 10 보드 + 팀 멤버 + API
-- [x] 이미지 업로드 (피드백에 스크린샷 첨부) ✓
-
-### 우선순위 중간
+### 중기
 - [ ] 소셜 로그인 (Google, GitHub)
 - [ ] 팀 멤버 초대/관리
-- [x] 이메일 알림 (새 피드백, 상태 변경) ✓
-- [x] 피드백 검색 ✓
-
-### 우선순위 낮음
 - [ ] API Access (Business 플랜)
-- [x] 커스텀 도메인 ✓
 - [ ] 데이터 내보내기 (CSV)
-- [ ] 다크 모드 (기본 테마가 다크모드)
 
 ## 파일 구조
 ```
 src/
-├── lib/supabase.js              # Supabase 클라이언트
+├── lib/supabase.js              # Supabase 클라이언트 (env var 검증 포함)
 ├── context/
 │   ├── AuthContext.jsx          # 인증 상태 관리 (user, profile, refreshProfile)
 │   └── BoardContext.jsx         # 보드 상태 관리
 ├── pages/
-│   ├── Landing.jsx              # 랜딩 페이지
-│   ├── Auth.jsx                 # 로그인/회원가입 (redirect 파라미터 지원)
+│   ├── Landing.jsx              # 랜딩 페이지 (데모 프리뷰 포함)
+│   ├── Landing.css              # 랜딩 스타일
+│   ├── Auth.jsx                 # 로그인/회원가입 (redirect 파라미터, open redirect 방지)
 │   ├── Dashboard.jsx            # 대시보드
 │   ├── Board.jsx                # 피드백 보드 (메인)
-│   ├── Board.css                # 보드 스타일
+│   ├── Board.css                # 보드 스타일 (Light/Dark 테마)
+│   ├── BoardSettings.css        # 보드 설정 스타일
 │   ├── FeedbackDetail.jsx       # 피드백 상세 (구버전, 사용안함)
 │   ├── BoardSettings.jsx        # 보드 설정 (구버전, 사용안함)
 │   └── NotFound.jsx             # 404
@@ -143,667 +154,293 @@ src/
 │   ├── BoardSettingsModal.css   # 모달 스타일
 │   ├── AccountSettingsModal.jsx # 계정 설정 모달 (닉네임/아바타 변경)
 │   └── AccountSettingsModal.css # 계정 설정 스타일
-└── styles/global.css            # 전역 스타일
+├── styles/global.css            # 전역 스타일
+docs/                            # 프로젝트 문서
+├── SETUP.md                     # 환경 설정 가이드
+├── DEPLOYMENT.md                # 배포 가이드
+├── ARCHITECTURE.md              # 코드 아키텍처
+├── KNOWN_ISSUES.md              # 알려진 이슈
+└── CURRENT_STATUS.md            # 현재 상태
+supabase/
+├── seed-demo.sql                # 데모 보드 시드 데이터
+└── functions/
+    ├── send-notification/       # 이메일 알림 (Resend)
+    ├── create-checkout-session/ # Stripe 결제 세션 생성
+    └── stripe-webhook/          # Stripe 웹훅 처리
 ```
+
+## 라우팅 경로 (App.jsx)
+| 경로 | 컴포넌트 | 설명 |
+|------|----------|------|
+| `/` | Landing | 랜딩 페이지 |
+| `/s/auth` | Auth | 로그인/회원가입 |
+| `/s/dashboard` | Dashboard | 대시보드 (내 보드 목록) |
+| `/s/pricing` | Pricing | 가격 페이지 |
+| `/404` | NotFound | 404 페이지 |
+| `/:slug` | Board | 보드 페이지 (동적) |
+
+**중요**: `/dashboard`가 아니라 `/s/dashboard`임! 잘못된 경로 사용 시 `/:slug`로 매칭되어 404 발생
 
 ## Supabase 테이블 구조
 - profiles: id (uuid, PK), nickname, avatar_url, created_at
-- boards: id (uuid, PK), owner_id, title, description, slug (unique), accent_color, created_at
-- feedback_posts: id (uuid, PK), board_id, user_id, title, description, category, status, author_name, image_url, created_at
+- boards: id (uuid, PK), owner_id, title, description, slug (unique), accent_color, theme, logo_url, custom_domain, created_at
+- feedback_posts: id (uuid, PK), board_id, user_id, title, description, category, status, priority, author_name, image_url, ticket_number, created_at
 - feedback_votes: post_id + user_id (복합 PK), vote_type
-- feedback_comments: id (uuid, PK), post_id, user_id, content, is_admin, created_at
+- feedback_comments: id (uuid, PK), post_id, user_id, content, is_admin, image_url, created_at
 - user_roles: board_id + user_id (복합 PK), role
+- comment_likes: comment_id + user_id (복합 PK)
+- subscriptions: user_id (PK), stripe_customer_id, stripe_subscription_id, plan, status, current_period_end
 
-## UI 개선 작업
+## Edge Function 환경변수 (dev/prod 모두 설정됨)
+- RESEND_API_KEY
+- FROM_EMAIL (Telloo <notifications@telloo.io>)
+- APP_URL
+- SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+- STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+- STRIPE_PRICE_PRO, STRIPE_PRICE_BUSINESS
 
-UI 시안 위치: `UI/` 폴더 (board.png, ticket_detail.png, board_settings.png, account_settings.png)
+---
 
-### 완료 (2026-01-01)
-- [x] 다크 모드 테마 색상 조정 (민트색 액센트 #2dd4bf)
-- [x] 모달/슬라이드 패널 CSS 추가 (global.css)
-- [x] 피드백 상세 → 슬라이드 패널로 변경
-  - FeedbackDetailPanel.jsx 컴포넌트 생성
-  - FeedbackDetailPanel.css 스타일 생성
-  - Board.jsx에서 클릭 시 패널 열기
-- [x] 보드 설정 → 모달로 변경
-  - BoardSettingsModal.jsx 컴포넌트 생성
-  - BoardSettingsModal.css 스타일 생성
-  - 사이드바 메뉴 구조 (General, People, Feedback, Advanced)
-- [x] 투표 UI 변경 (체크마크 스타일)
-  - 기존: 위/아래 화살표 + 숫자
-  - 변경: ✓ + 숫자 (오른쪽 배치)
-  - downvote 제거, upvote만 유지
-- [x] 상단 네비게이션 구조 변경
-  - 고정 네비게이션 바 추가
-  - Settings 링크, 프로필 아이콘
-- [x] 프로필 드롭다운 메뉴 추가
-  - Dashboard 링크
-  - Logout
-- [x] 티켓 번호 시스템 ✓
-  - FeedbackCard, FeedbackDetailPanel에서 #{ticket_number} 표시
-  - DB에 ticket_number 컬럼 및 자동 부여 트리거 적용 완료
+## 마지막 작업 (2026-02-22)
 
-### 진행 예정 (우선순위 중간)
-- [x] 검색 기능 ✓
-- [x] Priority (우선순위) 필드 ✓
-- [x] 투표자 목록 표시 ✓
-- [x] 댓글 좋아요 ✓
-- [x] 계정 설정 (닉네임/아바타 변경) ✓
-- [x] 아바타 이미지 표시 (프로필, 댓글, 투표자) ✓
+### QA 전체 코드 리뷰 및 Critical/High 이슈 수정
 
-### DB 스키마 변경 필요
+전체 코드베이스를 QA 관점에서 리뷰하여 112개 이슈 발견. Critical 6개 + High 11개 = 총 17개 수정 완료.
 
-#### 티켓 번호 시스템 (즉시 실행 필요)
-```sql
--- feedback_posts에 ticket_number 컬럼 추가
-ALTER TABLE feedback_posts ADD COLUMN ticket_number INTEGER;
+#### 수정된 보안 이슈 (Critical)
 
--- 기존 데이터에 번호 부여
-WITH numbered AS (
-  SELECT id, board_id,
-    ROW_NUMBER() OVER (PARTITION BY board_id ORDER BY created_at) as rn
-  FROM feedback_posts
-)
-UPDATE feedback_posts
-SET ticket_number = numbered.rn
-FROM numbered
-WHERE feedback_posts.id = numbered.id;
+1. **Auth.jsx - Open Redirect 방지**
+   - redirect 파라미터에 `//evil.com` 같은 외부 URL 주입 차단
+   - `startsWith('/') && !startsWith('//')` 검증 추가
 
--- 새 피드백 생성 시 자동 번호 부여를 위한 함수
-CREATE OR REPLACE FUNCTION set_ticket_number()
-RETURNS TRIGGER AS $$
-BEGIN
-  SELECT COALESCE(MAX(ticket_number), 0) + 1
-  INTO NEW.ticket_number
-  FROM feedback_posts
-  WHERE board_id = NEW.board_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+2. **supabase.js - 환경변수 검증**
+   - SUPABASE_URL, SUPABASE_ANON_KEY 없을 때 명확한 에러 메시지와 함께 즉시 실패
+   - 기존: 빈 문자열로 조용히 실패
 
--- 트리거 생성
-DROP TRIGGER IF EXISTS set_ticket_number_trigger ON feedback_posts;
-CREATE TRIGGER set_ticket_number_trigger
-  BEFORE INSERT ON feedback_posts
-  FOR EACH ROW
-  EXECUTE FUNCTION set_ticket_number();
+3. **send-notification - 인증 추가**
+   - Authorization 헤더 검증 로직 추가
+   - 인증 없이 아무나 이메일 발송 트리거 불가능하도록 수정
+
+4. **send-notification - HTML Injection 방지**
+   - 이메일 템플릿에 들어가는 모든 사용자 입력값에 escapeHtml() 적용
+   - title, comment, description, boardTitle 등
+
+5. **stripe-webhook - Webhook Secret 검증**
+   - STRIPE_WEBHOOK_SECRET 미설정 시 500 에러 반환 (기존: undefined로 서명 검증 우회 가능)
+
+6. **create-checkout-session - Open Redirect 방지**
+   - Stripe 리다이렉트 URL에 `req.headers.get('origin')` 대신 `Deno.env.get('APP_URL')` 사용
+   - 악의적 Origin 헤더로 리다이렉트 조작 불가능
+
+#### 수정된 버그 (High)
+
+7. **Dashboard.jsx - 렌더 중 navigate() 호출**
+   - `navigate('/s/auth')` → `<Navigate to="/s/auth" replace />` 컴포넌트로 변경
+   - React 렌더 사이클 중 상태 업데이트 경고 해결
+
+8. **Dashboard.jsx - subscription 쿼리 에러**
+   - `.single()` → `.maybeSingle()` (Free 유저는 subscription 행 없음)
+
+9. **Landing.jsx - 데모 fetch 에러 무한 로딩**
+   - try/catch 추가, 에러 시 "Could not load demo" 표시
+   - STATUS_LABELS에 `declined` 누락 수정
+
+10. **AuthContext.jsx - signOut 후 stale state**
+    - signOut 시 비동기 호출 전에 user/profile 먼저 null로 초기화
+
+11. **BoardContext.jsx - fetchUserRole stale closure**
+    - `boardData` 파라미터 추가하여 최신 보드 데이터 참조
+    - 로그아웃 시 userRole null로 초기화
+
+12. **FeedbackForm.jsx - submitting 영구 비활성화**
+    - 성공 시 `setSubmitting(false)` 누락 수정
+    - `user.email` null guard 추가 (`user.email?.split('@')[0]`)
+
+13. **FeedbackDetailPanel.jsx - 실패해도 알림 발송**
+    - 상태 변경 DB 업데이트 성공 시에만 sendNotification 호출
+
+14. **BoardSettingsModal.jsx - slug 예약어 미검증**
+    - `s`, `api`, `admin`, `auth`, `dashboard`, `demo`, `404` 등 예약어 차단
+    - slug 정규식 강화 (`/^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/`)
+
+15. **stripe-webhook - DB 에러 무시**
+    - 모든 DB 작업의 에러 체크 후 500 반환 (Stripe가 재시도하도록)
+
+16. **stripe-webhook - userId null 체크**
+    - checkout.session.completed에서 userId 없을 때 400 반환
+
+17. **send-notification - getUserById 사용**
+    - `listUsers()` O(N) 전체 스캔 → `getUserById()` O(1) 직접 조회
+
+#### 수정된 파일 (12개)
+```
+src/pages/Auth.jsx                              - open redirect 방지
+src/pages/Dashboard.jsx                         - <Navigate>, .maybeSingle()
+src/pages/Landing.jsx                           - 에러 핸들링, declined 상태
+src/lib/supabase.js                             - env var 검증
+src/context/AuthContext.jsx                      - signOut state 초기화
+src/context/BoardContext.jsx                     - stale closure 수정
+src/components/FeedbackForm.jsx                  - submitting 리셋, email null guard
+src/components/FeedbackDetailPanel.jsx           - 성공 시에만 알림 발송
+src/components/BoardSettingsModal.jsx            - slug 예약어 검증
+supabase/functions/send-notification/index.ts    - 인증, HTML escape, getUserById
+supabase/functions/create-checkout-session/index.ts - APP_URL 사용
+supabase/functions/stripe-webhook/index.ts       - webhook secret 검증, DB 에러 처리
 ```
 
-#### 추가 기능용 (나중에 필요시)
-```sql
--- feedback_posts 테이블에 추가
-ALTER TABLE feedback_posts ADD COLUMN priority TEXT DEFAULT 'empty';
-ALTER TABLE feedback_posts ADD COLUMN visibility TEXT DEFAULT 'public';
+#### 커밋 & 배포
+- 커밋: `d02f663 fix: Address critical and high severity QA issues across 12 files`
+- main push → Vercel 자동 배포 완료
 
--- 구독 테이블 추가
-CREATE TABLE feedback_subscriptions (
-  post_id UUID REFERENCES feedback_posts ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
-  PRIMARY KEY (post_id, user_id)
-);
+#### Edge Function 재배포 필요
+send-notification, create-checkout-session, stripe-webhook 3개 함수가 수정됨.
+Supabase Edge Function은 git push로 자동 배포되지 않으므로 별도 배포 필요:
+```bash
+# Production
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --no-verify-jwt --project-ref hspgbzgiewlqswoykybf
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy create-checkout-session --no-verify-jwt --project-ref hspgbzgiewlqswoykybf
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy stripe-webhook --no-verify-jwt --project-ref hspgbzgiewlqswoykybf
 
--- 댓글 좋아요 테이블 추가
-CREATE TABLE comment_likes (
-  comment_id UUID REFERENCES feedback_comments ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
-  PRIMARY KEY (comment_id, user_id)
-);
-
--- boards 테이블에 추가
-ALTER TABLE boards ADD COLUMN logo_url TEXT;
-ALTER TABLE boards ADD COLUMN background_url TEXT;
-ALTER TABLE boards ADD COLUMN default_sort TEXT DEFAULT 'trending';
-ALTER TABLE boards ADD COLUMN default_view TEXT DEFAULT 'feedback';
-ALTER TABLE boards ADD COLUMN language TEXT DEFAULT 'en';
-```
-
-## 마지막 작업 (2026-02-08)
-
-### 데모 보드 시드 데이터 생성
-랜딩 페이지 "View Demo" 버튼용 데모 보드 및 샘플 데이터.
-
-#### 파일 위치
-`supabase/seed-demo.sql`
-
-#### 실행 방법
-Supabase SQL Editor에서 직접 실행 (dev 환경 완료, prod 필요시 실행)
-
-#### 데이터 구성
-- **Board**: Acme Software (slug: `demo`, id: `deadbeef-0000-0000-0000-000000000000`)
-- **Posts**: 12개 (다양한 카테고리/상태)
-  - feature_request: 7개
-  - bug_report: 3개
-  - improvement: 2개
-- **Comments**: 21개 (일부 is_admin=true로 관리자 응답 포함)
-- **Votes**: 없음 (user_id 필요하므로 스킵, 사용자가 직접 투표 가능)
-
-#### 스키마 자동 변경 (seed SQL 내 포함)
-seed 파일 실행 시 자동으로 필요한 컬럼 추가됨:
-```sql
-ALTER TABLE boards ALTER COLUMN owner_id DROP NOT NULL;  -- 데모 보드용
-ALTER TABLE feedback_comments ALTER COLUMN user_id DROP NOT NULL;  -- 익명 댓글용
-ALTER TABLE boards ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark';
-ALTER TABLE boards ADD COLUMN IF NOT EXISTS logo_url TEXT;
-ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'empty';
-ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS ticket_number INTEGER;
-```
-
-#### UUID 형식 주의
-PostgreSQL UUID는 16진수만 허용 (0-9, a-f). 'demo', 'd3m0' 같은 문자 사용 불가.
-→ `deadbeef-xxxx-xxxx-xxxx-xxxxxxxxxxxx` 형식 사용
-
-### 로그인 리다이렉트 수정
-보드에서 가입/로그인 후 대시보드가 아닌 원래 보드로 돌아가도록 수정.
-
-#### 수정된 파일
-```
-src/pages/Board.jsx
-  - Login 링크: /s/auth → /s/auth?redirect=/{slug}
-  - Dashboard 링크: /dashboard → /s/dashboard (버그 수정)
-  - Telloo 로고: /dashboard → /s/dashboard (버그 수정)
-
-src/components/FeedbackForm.jsx
-  - 로그인 힌트 링크에 redirect 파라미터 추가
-
-src/components/FeedbackDetailPanel.jsx
-  - 로그인 프롬프트에 redirect 파라미터 추가
-```
-
-### 이미지 라이트박스 모달
-첨부 이미지 클릭 시 새 탭 대신 모달로 표시.
-
-#### 수정된 파일
-```
-src/components/FeedbackDetailPanel.jsx
-  - imageModalUrl state 추가
-  - window.open() → setImageModalUrl() 변경
-  - 이미지 모달 오버레이 JSX 추가
-
-src/components/FeedbackDetailPanel.css
-  - .image-modal-overlay: 전체화면 어두운 배경
-  - .image-modal-close: 우상단 X 버튼
-  - .image-modal-img: 중앙 정렬, max 90vw/90vh
-```
-
-### 다크 테마 밝기 조정 (메인 사이트)
-사용자 피드백: "너무 어둡다"
-
-#### 변경 내용 (global.css + Board.css)
-| 변수 | 이전 | 변경 후 |
-|------|------|---------|
-| --background | #0a0a0a (4%) | #181818 (9%) |
-| --surface | #141414 (8%) | #222222 (13%) |
-| --surface-hover | #1f1f1f (12%) | #2a2a2a (16%) |
-| --surface-elevated | #1a1a1a (10%) | #262626 (15%) |
-| --border | #262626 (15%) | #333333 (20%) |
-| --border-light | #333333 (20%) | #3d3d3d (24%) |
-| --text-muted | #737373 (45%) | #888888 (53%) |
-
-#### 수정된 파일
-```
-src/styles/global.css (:root)
-src/pages/Board.css (.board-page[data-theme="dark"])
-```
-
-### 라이트 테마 조정 (보드 페이지)
-사용자 피드백: "너무 눈부시다"
-
-#### 변경 내용 (Board.css)
-| 변수 | 이전 | 변경 후 |
-|------|------|---------|
-| --background | #ffffff | #f5f5f7 (Apple 스타일 오프화이트) |
-| --surface | #f9fafb | #ffffff (카드는 순백) |
-| --surface-hover | #f3f4f6 | #efefef |
-| --border | #e5e7eb | #dcdcde |
-| --border-light | #d1d5db | #c8c8cc |
-| --text | #111827 | #1a1a1a |
-
-### 라이트 테마 텍스트 색상 수정
-**문제**: 라이트 테마에서 티켓 상세 타이틀/본문이 안 보임
-**원인**: body의 `color: var(--text)` 계산 값이 다크 테마 값(#f5f5f5)으로 상속됨
-**해결**: `.board-page`에 `color: var(--text)` 명시적 추가
-
-```css
-.board-page {
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--text);  /* 추가됨 */
-}
-```
-
-### 커밋 히스토리 (이번 세션)
-```
-db13cc7 feat: Fix login redirects and add demo board seed data
-60265e6 feat: Add image lightbox modal for attachments
-696e254 feat: Add Light/Dark theme mode and expand color palette
+# Development
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --no-verify-jwt --project-ref kalhnkizplawebgdkcym
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy create-checkout-session --no-verify-jwt --project-ref kalhnkizplawebgdkcym
+SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy stripe-webhook --no-verify-jwt --project-ref kalhnkizplawebgdkcym
 ```
 
 ---
 
-## 다음 작업 (TODO - 긴급)
+## 이전 작업 (2026-02-15)
+
+### 랜딩 페이지 데모 카드 6개로 확장
+- `.limit(4)` → `.limit(6)` 변경 (Landing.jsx)
+- 커밋: `1c77e36 fix: Increase demo preview to 6 cards and fix BoardSettings.css typo`
+
+### Pricing 카드 한 줄 표시 수정
+- 다른 PC(pmstudios)에서 수정
+- 커밋: `b60b3fb fix: Display pricing cards in a single row`
+
+### 프로젝트 문서 생성
+PC 이전 작업을 위한 종합 문서 5개 생성 (docs/ 폴더):
+- `SETUP.md` - 환경 설정 가이드
+- `DEPLOYMENT.md` - 배포 가이드
+- `ARCHITECTURE.md` - 코드 아키텍처
+- `KNOWN_ISSUES.md` - 알려진 이슈
+- `CURRENT_STATUS.md` - 현재 상태
+- 커밋: `c22df21 docs: Add comprehensive project documentation for PC migration`
+
+---
+
+## 이전 작업 (2026-02-08)
 
 ### 랜딩 페이지 개선
-현재 구조: Hero → Features → **Pricing** → Footer
+- Pricing을 nav 링크로 분리
+- 라이브 데모 프리뷰 섹션 추가 (데모 보드에서 피드백 카드 fetch)
+- CTA 섹션 추가
+- 커밋: `911c244 feat: Improve landing page with live demo preview and CTA section`
 
-#### 계획
-1. **Pricing을 nav 링크로 분리**
-   - 상단 nav에 "Pricing" 링크 추가
-   - 별도 섹션(앵커) 또는 페이지로 이동
+### 데모 보드 시드 데이터 생성
+- 파일: `supabase/seed-demo.sql`
+- Board: Acme Software (slug: `demo`, id: `deadbeef-0000-0000-0000-000000000000`)
+- Posts: 12개, Comments: 21개
+- dev 환경 실행 완료
 
-2. **라이브 데모 프리뷰 섹션 추가** (Pricing 자리)
-   - 데모 보드의 피드백 카드 3~4개 실제 표시
-   - Supabase에서 데모 보드 데이터 fetch
-   - 클릭 시 `/demo`로 이동
-   - "See it in action" 느낌
+### 로그인 리다이렉트 수정
+보드에서 가입/로그인 후 원래 보드로 돌아가도록 수정
 
-3. **CTA 섹션 추가** (푸터 위)
-   - "Start collecting feedback today"
-   - Get Started 버튼
+### 이미지 라이트박스 모달
+첨부 이미지 클릭 시 새 탭 대신 모달로 표시
 
-#### 구현 예정 파일
-```
-src/pages/Landing.jsx
-  - nav에 Pricing 링크 추가
-  - pricing 섹션 → DemoPreview 섹션으로 교체
-  - CTA 섹션 추가
-  - useEffect로 데모 보드 데이터 fetch
-
-src/pages/Landing.css
-  - .demo-preview 섹션 스타일
-  - .cta-section 스타일
-```
+### 다크/라이트 테마 밝기 조정
+- 다크: 전체적으로 밝기 올림 (#0a0a0a → #181818 등)
+- 라이트: Apple 스타일 오프화이트 (#ffffff → #f5f5f7)
 
 ---
 
 ## 이전 작업 (2026-01-18 - 세션 2)
 
 ### Light/Dark 테마 모드 구현
-보드별로 Light/Dark 모드 선택 가능. 다른 서비스에 임베드될 때 해당 서비스 테마에 맞출 수 있음.
-
-#### 구현 내용
-- **Board.jsx**: `data-theme` 속성 + `--primary` CSS 변수 동적 적용
-- **Board.css**: Light/Dark 모드별 CSS 변수 정의
-  ```css
-  .board-page[data-theme="light"] { --background: #ffffff; --surface: #f9fafb; ... }
-  .board-page[data-theme="dark"] { --background: #0a0a0a; --surface: #141414; ... }
-  ```
-- **BoardSettingsModal.jsx**: Theme 토글 UI 추가 (Light ☀️ / Dark 🌙 버튼)
-- **BoardSettingsModal.css**: `.theme-option` 스타일 추가
-
-#### Primary 색상 동적 생성
-`color-mix()` CSS 함수로 선택한 액센트 컬러에서 파생 색상 자동 생성:
-```css
---primary-05: color-mix(in srgb, var(--primary) 5%, transparent);
---primary-10: color-mix(in srgb, var(--primary) 10%, transparent);
---primary-15: color-mix(in srgb, var(--primary) 15%, transparent);
---primary-20: color-mix(in srgb, var(--primary) 20%, transparent);
---primary-hover: color-mix(in srgb, var(--primary) 85%, black);
-```
-
-#### 하드코딩된 색상 제거
-`rgba(45, 212, 191, ...)` → `var(--primary-XX)`로 교체:
-- global.css: `.vote-btn-check.active`
-- FeedbackCard.css: `.vote-btn.active`
-- FeedbackDetailPanel.css: `.action-btn.active`
-- FeedbackForm.css: `.image-upload-btn:hover`
+- Board.jsx: `data-theme` 속성 + `--primary` CSS 변수 동적 적용
+- Board.css: Light/Dark 모드별 CSS 변수 정의
+- `color-mix()` CSS 함수로 primary 파생 색상 자동 생성
+- 하드코딩된 rgba(45, 212, 191, ...) → var(--primary-XX)로 교체
 
 ### 액센트 컬러 팔레트 확장
-5개 → 12개 색상으로 확장 (Tailwind CSS 팔레트 기반):
-```javascript
-const COLOR_THEMES = [
-  '#2dd4bf', // teal/mint (기본)
-  '#22c55e', // green
-  '#84cc16', // lime
-  '#eab308', // yellow
-  '#f97316', // orange
-  '#ef4444', // red
-  '#ec4899', // pink
-  '#a855f7', // purple
-  '#8b5cf6', // violet
-  '#6366f1', // indigo
-  '#3b82f6', // blue
-  '#0ea5e9', // sky
-]
-```
-
-### 보드 로고 이미지 비율 유지
-- **문제**: 로고가 80x80 고정 크기로 잘림
-- **해결**: 세로 80px 유지, 가로는 이미지 비율에 맞게 가변
-  ```css
-  .board-logo { min-width: 80px; height: 80px; }
-  .board-logo-img { height: 100%; width: auto; object-fit: contain; }
-  ```
+5개 → 12개 색상 (Tailwind CSS 팔레트 기반)
 
 ### 이메일 템플릿 색상 수정
-- **문제**: 다크 테마 이메일에서 제목/본문이 검정색으로 안 보임
-- **원인**: 이메일 클라이언트가 `<h2>`, `<strong>` 등에 기본 검정색 적용
-- **해결**: 모든 텍스트 요소에 명시적 색상 지정
-  - `<h2>`: `color: #f5f5f5`
-  - `<strong>`: `color: #f5f5f5`
-  - 본문 `<p>`: `color: #e5e5e5`
-  - 인용/설명: `color: #a3a3a3`
-  - 푸터: `color: #737373`
-- **배포 완료**: dev 환경 (`kalhnkizplawebgdkcym`)
+모든 텍스트 요소에 명시적 색상 지정 (이메일 클라이언트 호환)
 
-### DB 스키마 변경 필요
-```sql
--- boards 테이블에 theme 컬럼 추가 (dev/prod 모두 실행 필요)
-ALTER TABLE boards ADD COLUMN theme TEXT DEFAULT 'dark';
-```
-
-### 수정된 파일
-```
-src/pages/Board.jsx
-  - theme, accentColor 변수 추가
-  - data-theme={theme} 속성 추가
-  - style={{ '--primary': accentColor }} 적용
-
-src/pages/Board.css
-  - [data-theme="light"] CSS 변수 정의
-  - [data-theme="dark"] CSS 변수 정의
-  - --primary-05/10/15/20/hover 동적 생성
-  - .board-logo, .board-logo-img 비율 유지 스타일
-
-src/components/BoardSettingsModal.jsx
-  - theme state 추가
-  - useEffect에서 theme 로드
-  - updateBoard에 theme 포함
-  - Theme 토글 UI (Light/Dark 버튼)
-  - COLOR_THEMES 12개로 확장
-
-src/components/BoardSettingsModal.css
-  - .theme-options, .theme-option 스타일
-  - .color-options에 flex-wrap 추가
-
-src/styles/global.css
-  - :root에 --primary-05/10/15/20 fallback 추가
-  - .vote-btn-check.active 색상 변수화
-
-src/components/FeedbackCard.css
-  - .vote-btn.active 색상 변수화
-
-src/components/FeedbackDetailPanel.css
-  - .action-btn.active 색상 변수화
-
-src/components/FeedbackForm.css
-  - .image-upload-btn:hover 색상 변수화
-
-supabase/functions/send-notification/index.ts
-  - 모든 이메일 템플릿에 명시적 색상 추가
-  - h2, strong, p 등에 color 스타일 적용
-```
+---
 
 ## 이전 작업 (2026-01-18 - 세션 1)
 
 ### Board Settings 정리
-- **제거된 메뉴**: People and privacy, Feedback board (Coming Soon 상태였음)
-- **제거된 설정**: Default view, Default sort (UI만 있고 DB 저장/적용 안 됨)
-- **현재 메뉴 구조**: General, Advanced 2개만 유지
+- 메뉴: General, Advanced 2개만 유지
+- Delete Board 기능 구현
 
-### Delete Board 기능 구현
-- **위치**: BoardSettingsModal.jsx > Advanced 탭
-- **동작 방식**:
-  1. Delete Board 버튼 클릭 → "Are you sure?" 확인 메시지 표시
-  2. Yes, Delete 클릭 → 보드 삭제 후 `/s/dashboard`로 이동
-  3. Cancel 클릭 → 취소
-- **중요**: Context의 deleteBoard 사용 안 함 (상태 업데이트로 인한 race condition 방지)
-- **직접 supabase 호출**하여 삭제 후 `window.location.href`로 이동
+---
 
-### Supabase RLS 정책 추가 필요 (boards 테이블)
-```sql
--- boards 테이블 DELETE 정책 (필수!)
-CREATE POLICY "Users can delete own boards"
-ON boards
-FOR DELETE
-USING (auth.uid() = owner_id);
-```
-**주의**: 이 정책 없으면 삭제 요청이 조용히 무시됨 (에러 없음)
+## 이전 작업 (2026-01-14)
 
-### 라우팅 경로 정리 (App.jsx)
-| 경로 | 컴포넌트 | 설명 |
-|------|----------|------|
-| `/` | Landing | 랜딩 페이지 |
-| `/s/auth` | Auth | 로그인/회원가입 |
-| `/s/dashboard` | Dashboard | 대시보드 (내 보드 목록) |
-| `/404` | NotFound | 404 페이지 |
-| `/:slug` | Board | 보드 페이지 (동적) |
-| `/:slug/feedback/:feedbackId` | FeedbackDetail | 피드백 상세 (구버전) |
-| `/:slug/settings` | BoardSettings | 보드 설정 (구버전) |
+### 계정 설정 모달 (AccountSettingsModal)
+- 닉네임/아바타 변경
+- 아바타 이미지 업로드 (feedback-images 버킷)
+- 댓글/투표자 목록에 아바타 표시
 
-**중요**: `/dashboard`가 아니라 `/s/dashboard`임! 잘못된 경로 사용 시 `/:slug`로 매칭되어 404 발생
+---
 
-### Board Settings 미동작 기능 정리
-| 설정 | 상태 | 설명 |
-|------|------|------|
-| Board Title | ✅ 동작 | DB 저장됨 |
-| Board URL (slug) | ✅ 동작 | DB 저장됨, 변경 시 리다이렉트 |
-| Description | ✅ 동작 | DB 저장됨 |
-| Language | ❌ 미동작 | UI만 있음, DB 저장 안 됨 |
-| Color theme | ✅ 동작 | DB 저장됨 |
-| Custom Domain | ⚠️ 부분동작 | DB 저장만 됨, 실제 라우팅/Vercel 연동 없음 |
-| Delete Board | ✅ 동작 | RLS 정책 필요 |
+## 이전 작업 (2026-01-04)
 
-## 이전 작업 (2026-01-14 - 세션 3)
-
-### 계정 설정 모달 추가 (AccountSettingsModal)
-- 프로필 드롭다운에 Account 메뉴 추가 (Dashboard와 Logout 사이)
-- 닉네임 변경 기능
-- 아바타 이미지 업로드/제거 기능 (feedback-images 버킷 사용)
-- AuthContext에 refreshProfile 함수 추가 (페이지 리로드 없이 프로필 갱신)
-- 저장 후 refreshProfile() 호출하여 즉시 반영
-
-### 아바타 이미지 표시 적용
-- **우상단 프로필 버튼**: profile?.avatar_url 사용, 없으면 닉네임 첫글자
-- **댓글 작성자**: comment.profiles?.avatar_url 사용
-- **투표자 목록**: voter.avatar_url 사용 (fetchPost에서 avatar_url 조회 추가)
-- **optimistic 업데이트**: 새 댓글에 profile?.avatar_url 포함
-
-### 댓글 입력창 위치 수정
-- 문제: panel-content 안에 있어서 스크롤과 함께 움직임
-- 해결: panel-content 밖으로 분리하여 slide-panel의 직접 자식으로 변경
-- CSS: position: sticky → flex-shrink: 0 방식으로 변경
-
-### 댓글 이미지 optimistic 업데이트 수정
-- 문제: 이미지가 업로드 완료 후에야 표시됨
-- 해결:
-  1. savedImagePreview, savedImageFile을 로컬 변수로 저장
-  2. 폼 먼저 클리어 (UX 개선)
-  3. base64 프리뷰로 optimistic comment 즉시 표시
-  4. 백그라운드에서 이미지 업로드
-  5. DB 저장 후 실제 URL로 교체
-
-### Supabase 쿼리 버그 수정
-- **AuthContext.jsx**: profiles 테이블 조회 시 `.eq('user_id', userId)` → `.eq('id', userId)` (profiles.id가 PK)
-- **BoardContext.jsx**: user_roles 조회 시 `.single()` → `.maybeSingle()` (결과 없을 때 에러 방지)
-- **AuthContext.jsx**: profiles 조회 시 `.single()` → `.maybeSingle()`
-
-### 수정된 파일 상세
-```
-src/components/AccountSettingsModal.jsx (신규)
-  - 닉네임, 아바타 수정 UI
-  - 이미지 업로드 로직 (feedback-images 버킷)
-  - profiles 테이블 upsert 로직
-
-src/components/AccountSettingsModal.css (신규)
-  - 모달 스타일, 아바타 프리뷰, 버튼 스타일
-
-src/components/FeedbackDetailPanel.jsx
-  - useAuth에서 profile 추가
-  - 댓글 아바타 이미지 표시 로직
-  - 투표자 avatar_url 조회 추가
-  - optimistic 업데이트에 avatar_url 포함
-  - 댓글 폼을 panel-content 밖으로 이동
-
-src/components/FeedbackDetailPanel.css
-  - .avatar-img, .voter-avatar-img, .voter-item-avatar-img 스타일 추가
-
-src/context/AuthContext.jsx
-  - fetchProfile: .eq('id', userId), .maybeSingle()
-  - refreshProfile 함수 추가 및 export
-
-src/context/BoardContext.jsx
-  - fetchUserRole: .maybeSingle()
-
-src/pages/Board.jsx
-  - useAuth에서 profile 추가
-  - 프로필 버튼에 avatar_url 표시
-  - Account 메뉴 및 AccountSettingsModal 추가
-
-src/pages/Board.css
-  - .profile-avatar-img 스타일 추가
-```
-
-## 이전 작업 (2026-01-04 - 2차)
+### 이메일 알림 시스템
+- send-notification Edge Function (Resend)
+- 4가지 자동 알림: 댓글, 상태변경, 새글(관리자), 댓글(참여자)
 - 로그인 모달 팝업 구현
-  - 비로그인 상태에서 투표/댓글 좋아요 시 로그인 팝업 표시
-  - Login 버튼 클릭 시 /s/auth로 이동 (redirect 파라미터 포함)
-  - 로그인 후 이전 페이지로 자동 복귀
-- Edge Function CORS 수정
-  - send-notification에 CORS 헤더 추가
-  - OPTIONS preflight 요청 처리
-  - --no-verify-jwt 옵션으로 배포
-- DB FK 관계 수정 (dev 환경)
-  - comment_likes 테이블 생성 및 RLS 정책 추가
-  - feedback_comments.user_id → profiles.id FK 추가
-  - 조인 쿼리에서 명시적 FK 지정 (profiles!fk_feedback_comments_user)
-- UI 개선
-  - 시간 표기 정책: Just now / Xm ago / Xh ago / Xd ago / MMM DD
-  - 목록에서 Trending 정렬 옵션 제거 (기본값: Newest)
-- 수정된 파일:
-  - src/components/FeedbackCard.jsx - 로그인 모달, formatTimeAgo 함수
-  - src/components/FeedbackDetailPanel.jsx - 로그인 모달, FK 명시적 지정
-  - src/pages/Auth.jsx - redirect 파라미터 처리
-  - src/pages/Board.jsx - 정렬 옵션 제거
-  - src/styles/global.css - 로그인 모달 스타일
-  - supabase/functions/send-notification/index.ts - CORS 헤더
+- comment_likes 테이블 및 FK 관계 설정
 
-### dev 환경 DB 스키마 추가 (이미 실행됨)
-```sql
--- comment_likes 테이블
-CREATE TABLE IF NOT EXISTS comment_likes (
-  comment_id UUID REFERENCES feedback_comments ON DELETE CASCADE,
-  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
-  PRIMARY KEY (comment_id, user_id)
-);
-ALTER TABLE comment_likes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can read comment likes" ON comment_likes FOR SELECT USING (true);
-CREATE POLICY "Users can insert own likes" ON comment_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can delete own likes" ON comment_likes FOR DELETE USING (auth.uid() = user_id);
+---
 
--- FK 관계
-ALTER TABLE feedback_comments ADD CONSTRAINT fk_feedback_comments_user FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
-ALTER TABLE comment_likes ADD CONSTRAINT fk_comment_likes_user FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE;
-```
+## 이전 작업 (2026-01-01)
 
-### Edge Function 배포 명령어 (참고)
-```bash
-# Development 환경 배포 (--no-verify-jwt 필수)
-SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --no-verify-jwt --project-ref kalhnkizplawebgdkcym
+### 1차~4차 통합
+- UI 시안 기반 전체 리뉴얼 (슬라이드 패널, 모달, 체크마크 투표)
+- 검색, 이미지 업로드, Priority, 투표자 목록, 댓글 좋아요
+- Stripe 결제 연동, 커스텀 도메인 설정
+- 티켓 번호 시스템
 
-# Production 환경 배포
-SUPABASE_ACCESS_TOKEN=<token> npx supabase functions deploy send-notification --no-verify-jwt --project-ref hspgbzgiewlqswoykybf
-```
-
-### Edge Function 환경변수 (dev/prod 모두 설정됨)
-- RESEND_API_KEY
-- FROM_EMAIL (Telloo <notifications@telloo.io>)
-- APP_URL
-- SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-
-## 이전 작업 (2026-01-04 - 1차)
-- 이메일 알림 시스템 개선 및 완성
-  - Subscribe 버튼 제거 (사용자가 수동으로 구독할 필요 없음)
-  - send-notification Edge Function 4가지 자동 알림 케이스로 재구현:
-    - Case 1: 내 글에 댓글 → 글 작성자에게 알림
-    - Case 2: 내 글 상태 변경 → 글 작성자에게 알림
-    - Case 3: 새 글 작성 → 보드 관리자(owner + admin)에게 알림
-    - Case 4: 내가 댓글 단 글에 새 댓글 → 이전 댓글 작성자들에게 알림
-  - FeedbackForm.jsx에 새 글 작성 시 알림 호출 추가
-  - Edge Function 배포 완료 (dev/prod 환경)
-  - 테스트 완료 (이메일 발송 확인)
-
-## 이전 작업 (2026-01-01 - 4차)
-- Priority 필드 구현
-  - 관리자가 Low/Medium/High 설정 가능
-  - FeedbackCard, FeedbackDetailPanel에서 표시
-- 투표자 목록 표시
-  - 투표자 아바타 클릭 시 전체 목록 팝오버
-  - 닉네임 및 투표 유형 표시
-- 댓글 좋아요 기능
-  - comment_likes 테이블
-  - 좋아요 버튼 및 카운트 표시
-- 커스텀 도메인 설정
-  - BoardSettingsModal > Advanced에서 설정
-  - DNS CNAME 가이드 표시
-- 결제 시스템 (Stripe 연동)
-  - Pricing 페이지 (/s/pricing)
-  - Dashboard에 구독 정보 및 보드 제한 표시
-  - Supabase Edge Functions (create-checkout-session, stripe-webhook)
-- 이메일 알림 기능 (초기 구현)
-  - send-notification Edge Function (Resend 사용)
-  - 피드백 구독 기능 (Subscribe 버튼) - 이후 제거됨
-  - 상태 변경/댓글 추가 시 알림 발송
-
-## 이전 작업 (2026-01-01 - 3차)
-- 검색 기능 구현
-  - 툴바에 검색 입력 UI
-  - 제목/설명 실시간 필터링
-  - 검색 결과 없음 메시지
-- 이미지 업로드 기능 구현
-  - Supabase Storage 버킷 (feedback-images)
-  - FeedbackForm에 이미지 첨부 UI (최대 5MB, JPEG/PNG/GIF/WebP)
-  - FeedbackCard에 썸네일 표시
-  - FeedbackDetailPanel에 전체 이미지 표시
-
-## 이전 작업 (2026-01-01 - 2차)
-- UI 시안 기반 전체 리뉴얼
-  - 피드백 상세 → 슬라이드 패널 (FeedbackDetailPanel)
-  - 보드 설정 → 모달 (BoardSettingsModal)
-  - 투표 UI → 체크마크 스타일
-  - 상단 네비게이션 + 프로필 드롭다운
-  - 티켓 번호 표시
-
-## 이전 작업 (2026-01-01 - 1차)
-- UI 시안 분석 및 작업 목록 정리
-- 다크 모드 테마 색상 변경 (보라색 → 민트색)
-- global.css에 모달/슬라이드 패널 스타일 추가
+---
 
 ## 이전 작업 (2025-12-31)
-- dev/prod 환경 분리
-  - Git 브랜치: main (prod), dev (개발)
-  - Supabase 프로젝트 2개로 분리
-  - Vercel 배포 설정 (GitHub 연동, 환경변수)
-- .env.development, .env.production 파일 생성
-- Vercel 연동 완료 (자동 배포)
+
+### 환경 분리
+- dev/prod Supabase 프로젝트 분리
+- Vercel GitHub 연동 배포
+
+---
 
 ## 배포 상태
 
-### 현재 브랜치 상태
-- `dev` 브랜치: 최신 작업 완료 (2026-02-08)
-- `main` 브랜치: dev 머지 대기 중
+### 현재 (2026-02-22)
+- `main` 브랜치에서만 작업 (dev 브랜치 미사용)
+- main push → Vercel Production 자동 배포 (정상 작동)
 
-### 최근 커밋 (dev)
+### 최근 커밋
 ```
-db13cc7 feat: Fix login redirects and add demo board seed data
-60265e6 feat: Add image lightbox modal for attachments
-696e254 feat: Add Light/Dark theme mode and expand color palette
-1f0074b feat: Add delete board functionality and cleanup settings
+d02f663 fix: Address critical and high severity QA issues across 12 files
+b60b3fb fix: Display pricing cards in a single row
+c22df21 docs: Add comprehensive project documentation for PC migration
+1c77e36 fix: Increase demo preview to 6 cards and fix BoardSettings.css typo
+911c244 feat: Improve landing page with live demo preview and CTA section
 ```
 
-### Production 배포 전 체크리스트
-1. [x] dev 브랜치에 모든 변경사항 커밋/푸시 완료
-2. [ ] dev Preview에서 기능 테스트
-   - [ ] 데모 보드 확인 (/demo)
-   - [ ] 라이트/다크 테마 전환
-   - [ ] 이미지 모달
-   - [ ] 로그인 리다이렉트
-3. [ ] main에 머지 (`git checkout main && git merge dev && git push`)
-4. [ ] Vercel에서 Production 배포 확인
-5. [ ] Production Supabase에 seed-demo.sql 실행 (필요시)
+### Edge Function 배포 상태
+| Function | dev | prod | 비고 |
+|----------|-----|------|------|
+| send-notification | 배포됨 (구버전) | 배포됨 (구버전) | 2026-02-22 코드 수정됨, 재배포 필요 |
+| create-checkout-session | 배포됨 (구버전) | 배포됨 (구버전) | 2026-02-22 코드 수정됨, 재배포 필요 |
+| stripe-webhook | 배포됨 (구버전) | 배포됨 (구버전) | 2026-02-22 코드 수정됨, 재배포 필요 |
 
-### Production DB 스키마 확인 필요
+### Production DB 스키마 (필요시 확인)
 ```sql
--- 아래 컬럼/테이블이 있는지 확인 후 없으면 추가
 ALTER TABLE boards ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'dark';
 ALTER TABLE boards ADD COLUMN IF NOT EXISTS logo_url TEXT;
 ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS priority TEXT DEFAULT 'empty';
@@ -811,7 +448,6 @@ ALTER TABLE feedback_posts ADD COLUMN IF NOT EXISTS ticket_number INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE feedback_comments ADD COLUMN IF NOT EXISTS image_url TEXT;
 
--- comment_likes 테이블
 CREATE TABLE IF NOT EXISTS comment_likes (
   comment_id UUID REFERENCES feedback_comments ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users ON DELETE CASCADE,
@@ -821,17 +457,8 @@ CREATE TABLE IF NOT EXISTS comment_likes (
 
 ## 다음 작업 (TODO)
 
-### 즉시 (현재 세션 또는 다음 세션)
-- [ ] 랜딩 페이지 개선 (위 "다음 작업 - 긴급" 참조)
-  - Pricing → nav 링크로 분리
-  - 라이브 데모 프리뷰 섹션 추가
-  - CTA 섹션 추가
-- [ ] 테마 색상 변경사항 커밋/푸시
-
-### 단기
-- [ ] dev → main 머지 후 Production 배포
-- [ ] Production 환경에 send-notification Edge Function 배포
-- [ ] Production 환경에 Edge Function 환경변수 설정
+### 즉시
+- [ ] Edge Function 3개 재배포 (send-notification, create-checkout-session, stripe-webhook) - dev/prod 모두
 
 ### 중기
 - [ ] 소셜 로그인 (Google, GitHub)
@@ -841,7 +468,6 @@ CREATE TABLE IF NOT EXISTS comment_likes (
 
 ## 참고
 - Supabase 대시보드에서 Authentication > Providers > Email > "Confirm email" 옵션 꺼야 함 (dev, prod 둘 다)
-- Vercel 대시보드: https://vercel.com/phillips-projects-602ced67/telloo/settings
-- main에 push → Production 배포
-- dev에 push → Preview 배포
+- main에 push → Vercel Production 자동 배포 (정상 작동)
 - Supabase Access Token 생성: https://supabase.com/dashboard/account/tokens
+- Edge Function은 git push로 자동 배포 안 됨 → 수동 CLI 배포 필요
