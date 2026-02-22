@@ -101,9 +101,15 @@ export default function BoardSettingsModal({ onClose }) {
       return
     }
 
-    const slugRegex = /^[a-z0-9-]+$/
+    const slugRegex = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/
     if (!slugRegex.test(slug)) {
-      setError('Slug can only contain lowercase letters, numbers, and hyphens')
+      setError('Slug must start and end with a letter or number')
+      return
+    }
+
+    const reservedSlugs = ['s', 'api', 'admin', 'auth', 'login', 'signup', 'pricing', 'super-admin', 'dashboard', 'demo', '404', 'settings']
+    if (reservedSlugs.includes(slug)) {
+      setError('This URL is reserved. Please choose another.')
       return
     }
 

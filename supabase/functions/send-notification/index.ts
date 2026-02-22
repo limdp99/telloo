@@ -32,8 +32,42 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const payload: NotificationPayload = await req.json()
+    // Verify caller has valid Supabase auth
+    const authHeader = req.headers.get('Authorization')
+    if (authHeader) {
+      const callerClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      )
+      const { data: { user: caller } } = await callerClient.auth.getUser()
+      // Allow unauthenticated calls only from internal (no auth header = Supabase invoke)
+      if (authHeader && !caller) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
+    let payload: NotificationPayload
+    try {
+      payload = await req.json()
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const { type, postId, boardId, triggeredBy, newStatus, commentContent, postTitle } = payload
+
+    if (!type || !postId) {
+      return new Response(JSON.stringify({ error: 'Missing required fields: type, postId' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Get post details
     const { data: post, error: postError } = await supabaseAdmin
@@ -52,10 +86,18 @@ serve(async (req) => {
     const postUrl = `${APP_URL}/${post.boards.slug}?post=${post.id}`
     const emailsToSend: { email: string; subject: string; html: string }[] = []
 
-    // Helper function to get user email
+    // HTML escape to prevent injection in emails
+    const escapeHtml = (str: string): string => {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+    }
+
+    // Helper function to get user email by ID (direct lookup)
     const getUserEmail = async (userId: string): Promise<string | null> => {
-      const { data: { users } } = await supabaseAdmin.auth.admin.listUsers()
-      const user = users.find(u => u.id === userId)
+      const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(userId)
       return user?.email || null
     }
 
@@ -89,15 +131,18 @@ serve(async (req) => {
         if (!email) continue
 
         const isPostAuthor = userId === post.user_id
+        const safeTitle = escapeHtml(post.title)
+        const safeComment = escapeHtml(commentContent || '')
+
         const subject = isPostAuthor
           ? `New comment on your post "${post.title}"`
           : `New comment on "${post.title}"`
 
         const htmlContent = `
           <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">${isPostAuthor ? 'Someone commented on your post' : 'New comment on a post you commented on'}</h2>
-          <p style="color: #f5f5f5; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">${post.title}</p>
+          <p style="color: #f5f5f5; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">${safeTitle}</p>
           <blockquote style="border-left: 3px solid #2dd4bf; padding-left: 12px; margin: 16px 0; color: #a3a3a3;">
-            ${commentContent}
+            ${safeComment}
           </blockquote>
           <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the conversation</a></p>
         `
@@ -115,11 +160,13 @@ serve(async (req) => {
       if (post.user_id && post.user_id !== triggeredBy) {
         const email = await getUserEmail(post.user_id)
         if (email) {
+          const safeTitle2 = escapeHtml(post.title)
+          const safeStatus = escapeHtml(newStatus?.replace('_', ' ') || '')
           const subject = `Status update: "${post.title}" is now ${newStatus?.replace('_', ' ')}`
           const htmlContent = `
             <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">Status Update</h2>
-            <p style="color: #e5e5e5; margin: 0 0 12px 0;">Your post <strong style="color: #f5f5f5;">"${post.title}"</strong> has been updated to:</p>
-            <p style="font-size: 18px; color: #2dd4bf; font-weight: bold; margin: 12px 0;">${newStatus?.replace('_', ' ').toUpperCase()}</p>
+            <p style="color: #e5e5e5; margin: 0 0 12px 0;">Your post <strong style="color: #f5f5f5;">"${safeTitle2}"</strong> has been updated to:</p>
+            <p style="font-size: 18px; color: #2dd4bf; font-weight: bold; margin: 12px 0;">${safeStatus.toUpperCase()}</p>
             <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the post</a></p>
           `
           emailsToSend.push({
@@ -133,6 +180,10 @@ serve(async (req) => {
 
     // Case 3: New post notification - notify board admin
     if (type === 'new_post') {
+      const safeBoardTitle = escapeHtml(post.boards.title)
+      const safePostTitle = escapeHtml(post.title)
+      const safeDesc = post.description ? escapeHtml(post.description.substring(0, 200)) + (post.description.length > 200 ? '...' : '') : ''
+
       const boardOwnerId = post.boards.owner_id
       if (boardOwnerId && boardOwnerId !== triggeredBy) {
         const email = await getUserEmail(boardOwnerId)
@@ -140,9 +191,9 @@ serve(async (req) => {
           const subject = `New feedback on ${post.boards.title}: "${post.title}"`
           const htmlContent = `
             <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">New Feedback Submitted</h2>
-            <p style="color: #e5e5e5; margin: 0 0 12px 0;">A new post has been submitted to your board <strong style="color: #f5f5f5;">${post.boards.title}</strong>:</p>
-            <p style="font-size: 18px; font-weight: bold; color: #f5f5f5; margin: 12px 0;">${post.title}</p>
-            ${post.description ? `<p style="color: #a3a3a3; margin: 0 0 12px 0;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
+            <p style="color: #e5e5e5; margin: 0 0 12px 0;">A new post has been submitted to your board <strong style="color: #f5f5f5;">${safeBoardTitle}</strong>:</p>
+            <p style="font-size: 18px; font-weight: bold; color: #f5f5f5; margin: 12px 0;">${safePostTitle}</p>
+            ${safeDesc ? `<p style="color: #a3a3a3; margin: 0 0 12px 0;">${safeDesc}</p>` : ''}
             <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
           `
           emailsToSend.push({
@@ -169,9 +220,9 @@ serve(async (req) => {
             const subject = `New feedback on ${post.boards.title}: "${post.title}"`
             const htmlContent = `
               <h2 style="color: #f5f5f5; margin: 0 0 16px 0;">New Feedback Submitted</h2>
-              <p style="color: #e5e5e5; margin: 0 0 12px 0;">A new post has been submitted to <strong style="color: #f5f5f5;">${post.boards.title}</strong>:</p>
-              <p style="font-size: 18px; font-weight: bold; color: #f5f5f5; margin: 12px 0;">${post.title}</p>
-              ${post.description ? `<p style="color: #a3a3a3; margin: 0 0 12px 0;">${post.description.substring(0, 200)}${post.description.length > 200 ? '...' : ''}</p>` : ''}
+              <p style="color: #e5e5e5; margin: 0 0 12px 0;">A new post has been submitted to <strong style="color: #f5f5f5;">${safeBoardTitle}</strong>:</p>
+              <p style="font-size: 18px; font-weight: bold; color: #f5f5f5; margin: 12px 0;">${safePostTitle}</p>
+              ${safeDesc ? `<p style="color: #a3a3a3; margin: 0 0 12px 0;">${safeDesc}</p>` : ''}
               <p style="margin: 16px 0 0 0;"><a href="${postUrl}" style="color: #2dd4bf;">View the feedback</a></p>
             `
             emailsToSend.push({
@@ -224,7 +275,8 @@ serve(async (req) => {
   }
 })
 
-function buildEmailTemplate(content: string, boardTitle: string): string {
+function buildEmailTemplate(content: string, rawBoardTitle: string): string {
+  const boardTitle = rawBoardTitle.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   return `
     <!DOCTYPE html>
     <html>

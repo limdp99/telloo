@@ -204,13 +204,14 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   }
 
   const handleStatusChange = async (newStatus) => {
-    await supabase
+    const { error } = await supabase
       .from('feedback_posts')
       .update({ status: newStatus })
       .eq('id', post.id)
 
-    // Send notification for status change
-    sendNotification('status_change', { newStatus })
+    if (!error) {
+      sendNotification('status_change', { newStatus })
+    }
 
     fetchPost()
     onUpdate?.()

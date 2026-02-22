@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
@@ -20,7 +20,6 @@ const PLAN_NAMES = {
 export default function Dashboard() {
   const { user, signOut } = useAuth()
   const { boards, createBoard, loading } = useBoard()
-  const navigate = useNavigate()
 
   const [showCreate, setShowCreate] = useState(false)
   const [title, setTitle] = useState('')
@@ -41,7 +40,7 @@ export default function Dashboard() {
       .from('subscriptions')
       .select('*')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (data) {
       setSubscription(data)
@@ -98,8 +97,7 @@ export default function Dashboard() {
   }
 
   if (!user) {
-    navigate('/s/auth')
-    return null
+    return <Navigate to="/s/auth" replace />
   }
 
   return (

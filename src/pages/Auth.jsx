@@ -16,7 +16,8 @@ export default function Auth() {
 
   const { signIn, signUp, user } = useAuth()
   const navigate = useNavigate()
-  const redirect = searchParams.get('redirect') || '/s/dashboard'
+  const rawRedirect = searchParams.get('redirect') || '/s/dashboard'
+  const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/s/dashboard'
 
   useEffect(() => {
     if (user) {

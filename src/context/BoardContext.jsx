@@ -43,20 +43,22 @@ export function BoardProvider({ children }) {
     if (!error && data) {
       setCurrentBoard(data)
       if (user) {
-        await fetchUserRole(data.id)
+        await fetchUserRole(data.id, data)
+      } else {
+        setUserRole(null)
       }
     }
     return { data, error }
   }
 
-  const fetchUserRole = async (boardId) => {
+  const fetchUserRole = async (boardId, boardData = null) => {
     if (!user) {
       setUserRole(null)
       return
     }
 
-    // Check if owner
-    const board = boards.find(b => b.id === boardId) || currentBoard
+    // Check if owner - use passed boardData first to avoid stale closure
+    const board = boardData || boards.find(b => b.id === boardId) || currentBoard
     if (board?.owner_id === user.id) {
       setUserRole('admin')
       return

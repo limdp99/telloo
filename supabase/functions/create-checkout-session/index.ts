@@ -95,8 +95,8 @@ serve(async (req) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/s/dashboard?success=true`,
-      cancel_url: `${req.headers.get('origin')}/s/pricing?canceled=true`,
+      success_url: `${Deno.env.get('APP_URL') || 'https://telloo.vercel.app'}/s/dashboard?success=true`,
+      cancel_url: `${Deno.env.get('APP_URL') || 'https://telloo.vercel.app'}/s/pricing?canceled=true`,
       subscription_data: {
         metadata: {
           supabase_user_id: user.id,

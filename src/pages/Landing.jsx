@@ -11,6 +11,7 @@ const STATUS_LABELS = {
   planned: 'Planned',
   in_progress: 'In Progress',
   completed: 'Completed',
+  declined: 'Declined',
 }
 
 const CATEGORY_LABELS = {
@@ -28,24 +29,37 @@ export default function Landing() {
   }, [])
 
   const fetchDemoPosts = async () => {
-    const { data } = await supabase
-      .from('feedback_posts')
-      .select(`
-        *,
-        feedback_votes (vote_type),
-        feedback_comments (count)
-      `)
-      .eq('board_id', DEMO_BOARD_ID)
-      .order('created_at', { ascending: false })
-      .limit(6)
+    try {
+      const { data, error } = await supabase
+        .from('feedback_posts')
+        .select(`
+          *,
+          feedback_votes (vote_type),
+          feedback_comments (count)
+        `)
+        .eq('board_id', DEMO_BOARD_ID)
+        .order('created_at', { ascending: false })
+        .limit(6)
 
-    if (data) {
-      const postsWithVotes = data.map(post => ({
-        ...post,
-        upvotes: post.feedback_votes?.filter(v => v.vote_type === 'upvote').length || 0,
-        commentCount: post.feedback_comments?.[0]?.count || 0,
-      }))
-      setDemoPosts(postsWithVotes)
+      if (error) {
+        console.error('Failed to fetch demo posts:', error)
+        setDemoPosts(null)
+        return
+      }
+
+      if (data) {
+        const postsWithVotes = data.map(post => ({
+          ...post,
+          upvotes: post.feedback_votes?.filter(v => v.vote_type === 'upvote').length || 0,
+          commentCount: post.feedback_comments?.[0]?.count || 0,
+        }))
+        setDemoPosts(postsWithVotes)
+      } else {
+        setDemoPosts(null)
+      }
+    } catch (err) {
+      console.error('Failed to fetch demo posts:', err)
+      setDemoPosts(null)
     }
   }
 
@@ -125,7 +139,9 @@ export default function Landing() {
             <h2>See it in action</h2>
             <p className="section-subtitle">Real feedback from our demo board</p>
 
-            {demoPosts.length > 0 ? (
+            {demoPosts === null ? (
+              <div className="demo-loading">Could not load demo</div>
+            ) : demoPosts.length > 0 ? (
               <div className="demo-cards">
                 {demoPosts.map(post => (
                   <Link to="/demo" key={post.id} className="demo-card">

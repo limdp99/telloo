@@ -19,11 +19,17 @@ serve(async (req) => {
   const body = await req.text()
   let event: Stripe.Event
 
+  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET not configured')
+    return new Response('Server configuration error', { status: 500 })
+  }
+
   try {
     event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET')!,
+      webhookSecret,
       undefined,
       cryptoProvider
     )
@@ -49,8 +55,13 @@ serve(async (req) => {
         const plan = subscription.metadata.plan || 'pro'
         const userId = subscription.metadata.supabase_user_id
 
+        if (!userId) {
+          console.error('Missing supabase_user_id in subscription metadata')
+          return new Response('Missing user ID in metadata', { status: 400 })
+        }
+
         // Update subscription in database
-        await supabaseAdmin
+        const { error: upsertError } = await supabaseAdmin
           .from('subscriptions')
           .upsert({
             user_id: userId,
@@ -62,6 +73,11 @@ serve(async (req) => {
             updated_at: new Date().toISOString(),
           })
 
+        if (upsertError) {
+          console.error('DB upsert failed:', upsertError)
+          return new Response('Database error', { status: 500 })
+        }
+
         break
       }
 
@@ -70,7 +86,7 @@ serve(async (req) => {
         const userId = subscription.metadata.supabase_user_id
 
         if (userId) {
-          await supabaseAdmin
+          const { error: updateError } = await supabaseAdmin
             .from('subscriptions')
             .update({
               status: subscription.status === 'active' ? 'active' : subscription.status,
@@ -78,6 +94,11 @@ serve(async (req) => {
               updated_at: new Date().toISOString(),
             })
             .eq('user_id', userId)
+
+          if (updateError) {
+            console.error('DB update failed:', updateError)
+            return new Response('Database error', { status: 500 })
+          }
         }
         break
       }
@@ -87,7 +108,7 @@ serve(async (req) => {
         const userId = subscription.metadata.supabase_user_id
 
         if (userId) {
-          await supabaseAdmin
+          const { error: deleteError } = await supabaseAdmin
             .from('subscriptions')
             .update({
               plan: 'free',
@@ -97,6 +118,11 @@ serve(async (req) => {
               updated_at: new Date().toISOString(),
             })
             .eq('user_id', userId)
+
+          if (deleteError) {
+            console.error('DB update failed:', deleteError)
+            return new Response('Database error', { status: 500 })
+          }
         }
         break
       }
@@ -110,13 +136,18 @@ serve(async (req) => {
           const userId = subscription.metadata.supabase_user_id
 
           if (userId) {
-            await supabaseAdmin
+            const { error: failError } = await supabaseAdmin
               .from('subscriptions')
               .update({
                 status: 'past_due',
                 updated_at: new Date().toISOString(),
               })
               .eq('user_id', userId)
+
+            if (failError) {
+              console.error('DB update failed:', failError)
+              return new Response('Database error', { status: 500 })
+            }
           }
         }
         break

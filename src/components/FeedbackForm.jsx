@@ -98,7 +98,7 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
       description: description.trim(),
       category,
       user_id: user?.id || null,
-      author_name: user ? (profile?.nickname || user.email.split('@')[0]) : (authorName.trim() || 'Anonymous'),
+      author_name: user ? (profile?.nickname || user.email?.split('@')[0] || 'User') : (authorName.trim() || 'Anonymous'),
     }
 
     const { data, error: insertError } = await supabase
@@ -140,6 +140,7 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
       }
     }
 
+    setSubmitting(false)
     onCreated()
   }
 
