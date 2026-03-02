@@ -58,7 +58,7 @@
 .category-btn.active {
   background: var(--primary);
   border-color: var(--primary);
-  color: white;
+  color: var(--primary-text, #FFFFFF);
 }
 
 .login-hint {

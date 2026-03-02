@@ -83,7 +83,7 @@
 
 .pricing-card.popular {
   border-color: var(--primary);
-  box-shadow: 0 0 0 1px var(--primary), 0 8px 32px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 1px var(--primary), 0 8px 32px var(--primary-15);
 }
 
 .pricing-card.current {

@@ -217,7 +217,7 @@
   border-radius: 12px;
   font-size: 2rem;
   font-weight: 700;
-  color: white;
+  color: var(--primary-text, #FFFFFF);
   flex-shrink: 0;
   overflow: hidden;
 }

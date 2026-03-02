@@ -49,8 +49,8 @@
 }
 
 .plan-badge.plan-business {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8b5cf6;
+  background: var(--primary-15);
+  color: var(--primary);
 }
 
 .plan-badge:hover {
