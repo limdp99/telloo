@@ -5,6 +5,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --primary: #6366F1;
   --primary-hover: #4F46E5;
   --primary-05: rgba(99, 102, 241, 0.05);
