@@ -7,8 +7,6 @@ import Dashboard from './pages/Dashboard'
 // TODO: 결제 기능 구현 후 활성화
 // import Pricing from './pages/Pricing'
 import Board from './pages/Board'
-import FeedbackDetail from './pages/FeedbackDetail'
-import BoardSettings from './pages/BoardSettings'
 import NotFound from './pages/NotFound'
 import { ToastProvider } from './components/Toast'
 import './styles/global.css'
@@ -31,8 +29,6 @@ function App() {
 
             {/* Board routes (dynamic slug) */}
             <Route path="/:slug" element={<Board />} />
-            <Route path="/:slug/feedback/:feedbackId" element={<FeedbackDetail />} />
-            <Route path="/:slug/settings" element={<BoardSettings />} />
 
             {/* Catch all */}
             <Route path="*" element={<NotFound />} />
