@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useBoard } from '../context/BoardContext'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { RESERVED_SLUGS, ALLOWED_IMAGE_TYPES, MAX_AVATAR_SIZE } from '../lib/constants'
 import './BoardSettingsModal.css'
 
 const MENU_ITEMS = [
@@ -69,12 +70,11 @@ export default function BoardSettingsModal({ onClose }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setError('Only JPEG, PNG, GIF, and WebP images are allowed')
       return
     }
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > MAX_AVATAR_SIZE) {
       setError('Image size must be less than 2MB')
       return
     }
@@ -107,8 +107,7 @@ export default function BoardSettingsModal({ onClose }) {
       return
     }
 
-    const reservedSlugs = ['s', 'api', 'admin', 'auth', 'login', 'signup', 'pricing', 'super-admin', 'dashboard', 'demo', '404', 'settings']
-    if (reservedSlugs.includes(slug)) {
+    if (RESERVED_SLUGS.includes(slug)) {
       setError('This URL is reserved. Please choose another.')
       return
     }

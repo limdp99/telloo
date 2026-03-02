@@ -2,23 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { STATUS_LABELS, CATEGORY_LABELS_SHORT as CATEGORY_LABELS } from '../lib/constants'
 import './Landing.css'
 
 const DEMO_BOARD_ID = 'deadbeef-0000-0000-0000-000000000000'
-
-const STATUS_LABELS = {
-  under_review: 'Under Review',
-  planned: 'Planned',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  declined: 'Declined',
-}
-
-const CATEGORY_LABELS = {
-  feature_request: 'Feature',
-  bug_report: 'Bug',
-  improvement: 'Improvement',
-}
 
 export default function Landing() {
   const { user, signOut } = useAuth()

@@ -3,25 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
+import { STATUSES, STATUS_LABELS as statusLabels, PRIORITIES, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '../lib/constants'
 import './FeedbackDetailPanel.css'
-
-const statusLabels = {
-  under_review: 'Under Review',
-  planned: 'Planned',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  declined: 'Declined',
-  considering: 'Considering',
-}
-
-const STATUSES = ['under_review', 'considering', 'planned', 'in_progress', 'completed', 'declined']
-
-const PRIORITIES = [
-  { value: 'empty', label: 'Empty' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-]
 
 export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const { user, profile } = useAuth()
@@ -231,12 +214,11 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       alert('Only JPEG, PNG, GIF, and WebP images are allowed')
       return
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_SIZE) {
       alert('Image size must be less than 5MB')
       return
     }

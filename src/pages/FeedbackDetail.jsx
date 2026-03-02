@@ -3,23 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
+import { STATUSES, STATUS_LABELS as statusLabels, CATEGORY_LABELS as categoryLabels } from '../lib/constants'
 import './FeedbackDetail.css'
-
-const categoryLabels = {
-  feature_request: 'Feature Request',
-  bug_report: 'Bug Report',
-  improvement: 'Improvement',
-}
-
-const statusLabels = {
-  under_review: 'Under Review',
-  planned: 'Planned',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  declined: 'Declined',
-}
-
-const STATUSES = ['under_review', 'planned', 'in_progress', 'completed', 'declined']
 
 export default function FeedbackDetail() {
   const { slug, feedbackId } = useParams()

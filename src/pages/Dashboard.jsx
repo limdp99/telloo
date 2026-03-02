@@ -3,6 +3,7 @@ import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
+import { RESERVED_SLUGS } from '../lib/constants'
 import './Dashboard.css'
 
 const PLAN_LIMITS = {
@@ -65,8 +66,7 @@ export default function Dashboard() {
       return
     }
 
-    const reservedSlugs = ['s', 'api', 'admin', 'auth', 'login', 'signup', 'pricing', 'super-admin', 'dashboard']
-    if (reservedSlugs.includes(slug)) {
+    if (RESERVED_SLUGS.includes(slug)) {
       setError('This URL is reserved. Please choose another.')
       return
     }

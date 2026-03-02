@@ -8,23 +8,8 @@ import FeedbackForm from '../components/FeedbackForm'
 import FeedbackDetailPanel from '../components/FeedbackDetailPanel'
 import BoardSettingsModal from '../components/BoardSettingsModal'
 import AccountSettingsModal from '../components/AccountSettingsModal'
+import { FILTER_CATEGORIES as CATEGORIES, FILTER_STATUSES as STATUSES } from '../lib/constants'
 import './Board.css'
-
-const CATEGORIES = [
-  { value: 'all', label: 'All' },
-  { value: 'feature_request', label: 'Feature Request' },
-  { value: 'bug_report', label: 'Bug Report' },
-  { value: 'improvement', label: 'Improvement' },
-]
-
-const STATUSES = [
-  { value: 'all', label: 'All Status' },
-  { value: 'under_review', label: 'Under Review' },
-  { value: 'planned', label: 'Planned' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'declined', label: 'Declined' },
-]
 
 export default function Board() {
   const { slug } = useParams()

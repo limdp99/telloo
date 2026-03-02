@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { ALLOWED_IMAGE_TYPES, MAX_AVATAR_SIZE } from '../lib/constants'
 import './AccountSettingsModal.css'
 
 export default function AccountSettingsModal({ onClose }) {
@@ -18,12 +19,11 @@ export default function AccountSettingsModal({ onClose }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setMessage({ type: 'error', text: 'Only JPEG, PNG, GIF, and WebP images are allowed' })
       return
     }
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > MAX_AVATAR_SIZE) {
       setMessage({ type: 'error', text: 'Image size must be less than 2MB' })
       return
     }

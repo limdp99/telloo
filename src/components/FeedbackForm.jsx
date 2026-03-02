@@ -2,16 +2,8 @@ import { useState, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { CATEGORIES, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '../lib/constants'
 import './FeedbackForm.css'
-
-const CATEGORIES = [
-  { value: 'feature_request', label: 'Feature Request' },
-  { value: 'bug_report', label: 'Bug Report' },
-  { value: 'improvement', label: 'Improvement' },
-]
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
 export default function FeedbackForm({ boardId, onClose, onCreated }) {
   const { user, profile } = useAuth()
@@ -30,12 +22,12 @@ export default function FeedbackForm({ boardId, onClose, onCreated }) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setError('Only JPEG, PNG, GIF, and WebP images are allowed')
       return
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_SIZE) {
       setError('Image size must be less than 5MB')
       return
     }
