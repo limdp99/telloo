@@ -271,29 +271,39 @@
 }
 
 .status-select {
-  background: transparent;
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
   color: var(--text);
   font-size: 0.875rem;
   cursor: pointer;
-  padding: 0.25rem 0;
+  padding: 0.375rem 0.5rem;
 }
 
 .status-select:focus {
   outline: none;
+  border-color: var(--primary);
 }
 
 .priority-select {
-  background: transparent;
-  border: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
   color: var(--text);
   font-size: 0.875rem;
   cursor: pointer;
-  padding: 0.25rem 0;
+  padding: 0.375rem 0.5rem;
 }
 
 .priority-select:focus {
   outline: none;
+  border-color: var(--primary);
+}
+
+.status-select option,
+.priority-select option {
+  background: var(--surface);
+  color: var(--text);
 }
 
 .priority-badge {
