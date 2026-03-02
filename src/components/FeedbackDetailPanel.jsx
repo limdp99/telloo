@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
 import { STATUSES, STATUS_LABELS as statusLabels, PRIORITIES, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '../lib/constants'
+import { useToast } from './Toast'
 import './FeedbackDetailPanel.css'
 
 export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
@@ -11,6 +12,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
   const { userRole } = useBoard()
   const navigate = useNavigate()
   const location = useLocation()
+  const toast = useToast()
 
   const [post, setPost] = useState(null)
   const [comments, setComments] = useState([])
@@ -215,11 +217,11 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
     if (!file) return
 
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      alert('Only JPEG, PNG, GIF, and WebP images are allowed')
+      toast.error('Only JPEG, PNG, GIF, and WebP images are allowed')
       return
     }
     if (file.size > MAX_IMAGE_SIZE) {
-      alert('Image size must be less than 5MB')
+      toast.error('Image size must be less than 5MB')
       return
     }
 
@@ -314,7 +316,7 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
       console.error('Comment insert error:', error)
       // Remove optimistic comment on error
       setComments(prev => prev.filter(c => c.id !== tempId))
-      alert('Failed to post comment: ' + error.message)
+      toast.error('Failed to post comment: ' + error.message)
       setSubmitting(false)
       return
     }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { useToast } from '../components/Toast'
 import './Pricing.css'
 
 const PLANS = [
@@ -67,6 +68,7 @@ const PLANS = [
 export default function Pricing() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const toast = useToast()
   const [loading, setLoading] = useState(null)
   const [currentPlan, setCurrentPlan] = useState('free')
 
@@ -97,7 +99,7 @@ export default function Pricing() {
       }
     } catch (error) {
       console.error('Error creating checkout session:', error)
-      alert('Failed to start checkout. Please try again.')
+      toast.error('Failed to start checkout. Please try again.')
     } finally {
       setLoading(null)
     }

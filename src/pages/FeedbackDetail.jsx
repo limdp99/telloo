@@ -4,10 +4,12 @@ import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
 import { STATUSES, STATUS_LABELS as statusLabels, CATEGORY_LABELS as categoryLabels } from '../lib/constants'
+import { useToast } from '../components/Toast'
 import './FeedbackDetail.css'
 
 export default function FeedbackDetail() {
   const { slug, feedbackId } = useParams()
+  const toast = useToast()
   const { user, profile } = useAuth()
   const { currentBoard, fetchBoardBySlug, userRole } = useBoard()
   const navigate = useNavigate()
@@ -76,7 +78,7 @@ export default function FeedbackDetail() {
 
   const handleVote = async (voteType) => {
     if (!user) {
-      alert('Please login to vote')
+      toast.error('Please login to vote')
       return
     }
 

@@ -10,12 +10,14 @@ import Board from './pages/Board'
 import FeedbackDetail from './pages/FeedbackDetail'
 import BoardSettings from './pages/BoardSettings'
 import NotFound from './pages/NotFound'
+import { ToastProvider } from './components/Toast'
 import './styles/global.css'
 
 function App() {
   return (
     <AuthProvider>
       <BoardProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Routes>
             {/* Static routes */}
@@ -36,6 +38,7 @@ function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </BoardProvider>
     </AuthProvider>
   )
