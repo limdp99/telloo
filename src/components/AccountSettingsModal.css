@@ -128,7 +128,7 @@
   height: 80px;
   border-radius: 50%;
   background: var(--primary);
-  color: var(--background);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -219,7 +219,7 @@
   background: var(--primary);
   border: none;
   border-radius: 6px;
-  color: var(--background);
+  color: #FFFFFF;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;

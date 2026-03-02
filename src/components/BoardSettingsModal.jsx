@@ -13,18 +13,18 @@ const MENU_ITEMS = [
 
 
 const COLOR_THEMES = [
-  '#2dd4bf', // teal/mint
-  '#22c55e', // green
-  '#84cc16', // lime
-  '#eab308', // yellow
-  '#f97316', // orange
-  '#ef4444', // red
-  '#ec4899', // pink
-  '#a855f7', // purple
-  '#8b5cf6', // violet
-  '#6366f1', // indigo
-  '#3b82f6', // blue
-  '#0ea5e9', // sky
+  '#818CF8', // indigo
+  '#4ADE80', // green
+  '#A3E635', // lime
+  '#2DD4BF', // teal
+  '#FACC15', // yellow
+  '#FB923C', // orange
+  '#F87171', // red
+  '#F472B6', // pink
+  '#C084FC', // purple
+  '#A78BFA', // violet
+  '#60A5FA', // blue
+  '#38BDF8', // sky
 ]
 
 export default function BoardSettingsModal({ onClose }) {
@@ -37,7 +37,7 @@ export default function BoardSettingsModal({ onClose }) {
   const [description, setDescription] = useState('')
   const [slug, setSlug] = useState('')
   const [theme, setTheme] = useState('dark')
-  const [accentColor, setAccentColor] = useState('#2dd4bf')
+  const [accentColor, setAccentColor] = useState('#818CF8')
   const [customDomain, setCustomDomain] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [logoPreview, setLogoPreview] = useState('')
@@ -53,7 +53,7 @@ export default function BoardSettingsModal({ onClose }) {
       setDescription(currentBoard.description || '')
       setSlug(currentBoard.slug || '')
       setTheme(currentBoard.theme || 'dark')
-      setAccentColor(currentBoard.accent_color || '#2dd4bf')
+      setAccentColor(currentBoard.accent_color || '#818CF8')
       setCustomDomain(currentBoard.custom_domain || '')
       setLogoUrl(currentBoard.logo_url || '')
       setLogoPreview(currentBoard.logo_url || '')

@@ -119,7 +119,7 @@
   height: 28px;
   border-radius: 50%;
   background: var(--primary);
-  color: var(--background);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,7 +232,7 @@
   height: 24px;
   border-radius: 50%;
   background: var(--primary);
-  color: var(--background);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -448,7 +448,7 @@
 
 .comment-avatar .avatar.admin {
   background: var(--primary);
-  color: var(--background);
+  color: #FFFFFF;
 }
 
 .comment-avatar .avatar-img {
@@ -658,7 +658,7 @@
   background: var(--primary);
   border: none;
   border-radius: 8px;
-  color: var(--background);
+  color: #FFFFFF;
   font-size: 18px;
   font-weight: 600;
   cursor: pointer;

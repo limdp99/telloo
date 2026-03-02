@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { STATUS_LABELS } from '../lib/constants'
+import { STATUS_LABELS, CATEGORY_LABELS_SHORT } from '../lib/constants'
 import './FeedbackCard.css'
 
 export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick }) {
@@ -83,6 +83,11 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick })
 
         <div className="feedback-footer">
           <div className="feedback-status-row">
+            {post.category && (
+              <span className={`badge badge-${post.category === 'feature_request' ? 'feature' : post.category === 'bug_report' ? 'bug' : 'improvement'}`}>
+                {CATEGORY_LABELS_SHORT[post.category] || post.category}
+              </span>
+            )}
             <span className={`status-indicator status-${post.status.replace('_', '-')}`}>
               {STATUS_LABELS[post.status]}
             </span>

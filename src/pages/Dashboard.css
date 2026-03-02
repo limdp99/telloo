@@ -44,7 +44,7 @@
 }
 
 .plan-badge.plan-pro {
-  background: rgba(45, 212, 191, 0.15);
+  background: var(--primary-15);
   color: var(--primary);
 }
 
@@ -164,7 +164,7 @@
 .board-url {
   font-size: 0.75rem;
   color: var(--primary);
-  background: rgba(139, 92, 246, 0.1);
+  background: var(--primary-10);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
 }

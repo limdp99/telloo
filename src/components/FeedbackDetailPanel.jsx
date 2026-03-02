@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useBoard } from '../context/BoardContext'
 import { supabase } from '../lib/supabase'
-import { STATUSES, STATUS_LABELS as statusLabels, PRIORITIES, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '../lib/constants'
+import { STATUSES, STATUS_LABELS as statusLabels, CATEGORY_LABELS, PRIORITIES, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE } from '../lib/constants'
 import { useToast } from './Toast'
 import './FeedbackDetailPanel.css'
 
@@ -451,6 +451,17 @@ export default function FeedbackDetailPanel({ feedbackId, onClose, onUpdate }) {
                 )}
               </div>
             </div>
+
+            {post.category && (
+              <div className="meta-row">
+                <span className="meta-label">Category</span>
+                <div className="meta-value">
+                  <span className={`badge badge-${post.category === 'feature_request' ? 'feature' : post.category === 'bug_report' ? 'bug' : 'improvement'}`}>
+                    {CATEGORY_LABELS[post.category] || post.category}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="meta-row">
               <span className="meta-label">Status</span>

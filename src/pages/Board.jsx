@@ -132,7 +132,7 @@ export default function Board() {
   const isAdmin = userRole === 'admin' || userRole === 'super_admin'
 
   const theme = currentBoard?.theme || 'dark'
-  const accentColor = currentBoard?.accent_color || '#2dd4bf'
+  const accentColor = currentBoard?.accent_color || '#818CF8'
 
   return (
     <div className="board-page" data-theme={theme} style={{ '--primary': accentColor }}>

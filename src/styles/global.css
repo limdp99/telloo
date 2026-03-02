@@ -5,21 +5,21 @@
 }
 
 :root {
-  --primary: #2dd4bf;
-  --primary-hover: #14b8a6;
-  --primary-05: rgba(45, 212, 191, 0.05);
-  --primary-10: rgba(45, 212, 191, 0.1);
-  --primary-15: rgba(45, 212, 191, 0.15);
-  --primary-20: rgba(45, 212, 191, 0.2);
-  --background: #181818;
-  --surface: #222222;
-  --surface-hover: #2a2a2a;
-  --surface-elevated: #262626;
-  --border: #333333;
-  --border-light: #3d3d3d;
-  --text: #f5f5f5;
-  --text-muted: #888888;
-  --text-secondary: #a3a3a3;
+  --primary: #6366F1;
+  --primary-hover: #4F46E5;
+  --primary-05: rgba(99, 102, 241, 0.05);
+  --primary-10: rgba(99, 102, 241, 0.1);
+  --primary-15: rgba(99, 102, 241, 0.15);
+  --primary-20: rgba(99, 102, 241, 0.2);
+  --background: #0F1419;
+  --surface: #1A2332;
+  --surface-hover: #243044;
+  --surface-elevated: #1E2A3A;
+  --border: #2A3A4E;
+  --border-light: #344B63;
+  --text: #F1F5F9;
+  --text-muted: #8899A6;
+  --text-secondary: #A8B9C8;
   --success: #22c55e;
   --warning: #f59e0b;
   --error: #ef4444;
@@ -76,7 +76,7 @@ input, textarea, select {
 
 .btn-primary {
   background: var(--primary);
-  color: #0a0a0a;
+  color: #FFFFFF;
 }
 
 .btn-primary:hover {
@@ -318,13 +318,13 @@ input, textarea, select {
 }
 
 .login-modal-actions .btn-primary {
-  background: var(--primary, #2dd4bf);
+  background: var(--primary, #6366F1);
   border: none;
-  color: var(--background, #181818);
+  color: #FFFFFF;
 }
 
 .login-modal-actions .btn-primary:hover {
-  background: var(--primary-hover, #22b8a5);
+  background: var(--primary-hover, #4F46E5);
 }
 
 .slide-panel-overlay {
