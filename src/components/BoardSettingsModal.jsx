@@ -133,15 +133,19 @@ export default function BoardSettingsModal({ onClose }) {
       newLogoUrl = publicUrl
     }
 
-    const { error: updateError } = await updateBoard(currentBoard.id, {
+    const updates = {
       title: title.trim(),
       description: description.trim() || null,
       slug: slug,
       theme: theme,
       accent_color: accentColor,
       logo_url: newLogoUrl || null,
-      custom_domain: customDomain.trim() || null,
-    })
+    }
+    if (customDomain.trim()) {
+      updates.custom_domain = customDomain.trim()
+    }
+
+    const { error: updateError } = await updateBoard(currentBoard.id, updates)
 
     if (updateError) {
       if (updateError.code === '23505') {
