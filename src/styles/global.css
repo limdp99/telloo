@@ -318,13 +318,13 @@ input, textarea, select {
 }
 
 .login-modal-actions .btn-primary {
-  background: var(--accent);
+  background: var(--primary, #2dd4bf);
   border: none;
-  color: var(--bg);
+  color: var(--background, #181818);
 }
 
 .login-modal-actions .btn-primary:hover {
-  background: var(--accent-hover);
+  background: var(--primary-hover, #22b8a5);
 }
 
 .slide-panel-overlay {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react'
+import { useState, useCallback, createContext, useContext } from 'react'
 import './Toast.css'
 
 const ToastContext = createContext(null)
@@ -18,13 +18,6 @@ export function ToastProvider({ children }) {
     }, duration)
   }, [])
 
-  const toast = useCallback({
-    error: (msg) => addToast(msg, 'error'),
-    success: (msg) => addToast(msg, 'success'),
-    info: (msg) => addToast(msg, 'info'),
-  }, [addToast])
-
-  // Fix: useCallback can't wrap an object, use useMemo-like pattern
   return (
     <ToastContext.Provider value={{ error: (msg) => addToast(msg, 'error'), success: (msg) => addToast(msg, 'success'), info: (msg) => addToast(msg, 'info') }}>
       {children}

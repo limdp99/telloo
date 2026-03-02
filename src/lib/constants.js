@@ -16,6 +16,7 @@ export const STATUSES = ['under_review', 'considering', 'planned', 'in_progress'
 export const FILTER_STATUSES = [
   { value: 'all', label: 'All Status' },
   { value: 'under_review', label: 'Under Review' },
+  { value: 'considering', label: 'Considering' },
   { value: 'planned', label: 'Planned' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },

@@ -2,21 +2,8 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { STATUS_LABELS } from '../lib/constants'
 import './FeedbackCard.css'
-
-const categoryLabels = {
-  feature_request: 'Feature Request',
-  bug_report: 'Bug Report',
-  improvement: 'Improvement',
-}
-
-const statusLabels = {
-  under_review: 'Under Review',
-  planned: 'Planned',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  declined: 'Declined',
-}
 
 export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick }) {
   const { user } = useAuth()
@@ -30,29 +17,35 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick })
       return
     }
 
+    let result
     if (post.userVote === voteType) {
       // Remove vote
-      await supabase
+      result = await supabase
         .from('feedback_votes')
         .delete()
         .eq('post_id', post.id)
         .eq('user_id', user.id)
     } else if (post.userVote) {
       // Change vote
-      await supabase
+      result = await supabase
         .from('feedback_votes')
         .update({ vote_type: voteType })
         .eq('post_id', post.id)
         .eq('user_id', user.id)
     } else {
       // New vote
-      await supabase
+      result = await supabase
         .from('feedback_votes')
         .insert({
           post_id: post.id,
           user_id: user.id,
           vote_type: voteType,
         })
+    }
+
+    if (result.error) {
+      console.error('Vote error:', result.error)
+      return
     }
 
     onVoteChange()
@@ -91,7 +84,7 @@ export default function FeedbackCard({ post, boardSlug, onVoteChange, onClick })
         <div className="feedback-footer">
           <div className="feedback-status-row">
             <span className={`status-indicator status-${post.status.replace('_', '-')}`}>
-              {statusLabels[post.status]}
+              {STATUS_LABELS[post.status]}
             </span>
             {post.priority && post.priority !== 'empty' && (
               <span className={`priority-indicator priority-${post.priority}`}>
