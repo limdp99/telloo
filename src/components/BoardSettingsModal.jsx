@@ -10,11 +10,7 @@ const MENU_ITEMS = [
   { id: 'advanced', label: 'Advanced', icon: 'advanced' },
 ]
 
-const LANGUAGES = [
-  { value: 'en', label: 'English' },
-  { value: 'ko', label: '한국어' },
-  { value: 'ja', label: '日本語' },
-]
+
 
 const COLOR_THEMES = [
   '#2dd4bf', // teal/mint
@@ -42,7 +38,6 @@ export default function BoardSettingsModal({ onClose }) {
   const [slug, setSlug] = useState('')
   const [theme, setTheme] = useState('dark')
   const [accentColor, setAccentColor] = useState('#2dd4bf')
-  const [language, setLanguage] = useState('en')
   const [customDomain, setCustomDomain] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [logoPreview, setLogoPreview] = useState('')
@@ -59,7 +54,6 @@ export default function BoardSettingsModal({ onClose }) {
       setSlug(currentBoard.slug || '')
       setTheme(currentBoard.theme || 'dark')
       setAccentColor(currentBoard.accent_color || '#2dd4bf')
-      setLanguage(currentBoard.language || 'en')
       setCustomDomain(currentBoard.custom_domain || '')
       setLogoUrl(currentBoard.logo_url || '')
       setLogoPreview(currentBoard.logo_url || '')
@@ -307,24 +301,6 @@ export default function BoardSettingsModal({ onClose }) {
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
           />
-        </div>
-      </div>
-
-      <div className="settings-row">
-        <div className="settings-label">
-          <span className="label-title">Language</span>
-          <span className="label-desc">The language used on your board</span>
-        </div>
-        <div className="settings-value">
-          <select
-            className="settings-select"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-          >
-            {LANGUAGES.map(lang => (
-              <option key={lang.value} value={lang.value}>{lang.label}</option>
-            ))}
-          </select>
         </div>
       </div>
 
