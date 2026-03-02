@@ -134,8 +134,18 @@ export default function Board() {
   const theme = currentBoard?.theme || 'dark'
   const accentColor = currentBoard?.accent_color || '#818CF8'
 
+  // Calculate contrast text color based on accent luminance
+  const getContrastText = (hex) => {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000
+    return brightness > 150 ? '#1A1F36' : '#FFFFFF'
+  }
+  const primaryText = getContrastText(accentColor)
+
   return (
-    <div className="board-page" data-theme={theme} style={{ '--primary': accentColor }}>
+    <div className="board-page" data-theme={theme} style={{ '--primary': accentColor, '--primary-text': primaryText }}>
       {/* Top Navigation */}
       <nav className="top-nav">
         <div className="top-nav-content">

@@ -96,7 +96,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: var(--primary);
-  color: #FFFFFF;
+  color: var(--primary-text, #FFFFFF);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -169,7 +169,7 @@
 
 .plan-cta.primary {
   background: var(--primary);
-  color: #FFFFFF;
+  color: var(--primary-text, #FFFFFF);
   border: none;
 }
 
