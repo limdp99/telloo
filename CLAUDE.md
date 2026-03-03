@@ -170,6 +170,7 @@ docs/                            # 프로젝트 문서
 ├── ARCHITECTURE.md              # 코드 아키텍처
 ├── KNOWN_ISSUES.md              # 알려진 이슈
 └── CURRENT_STATUS.md            # 현재 상태
+vercel.json                          # Vercel SPA rewrite 설정
 supabase/
 ├── seed-demo.sql                # 데모 보드 시드 데이터 (dev/prod 모두 실행 완료)
 └── functions/
@@ -220,7 +221,62 @@ supabase/
 
 ---
 
-## 마지막 작업 (2026-03-02)
+## 마지막 작업 (2026-03-03)
+
+### Color Theme Overhaul (teal → indigo)
+전체 컬러 테마를 teal/mint에서 indigo/blue-tinted slate로 변경:
+- Brand Primary: `#2dd4bf` (teal) → `#6366F1` (indigo)
+- Dark Background: `#181818` (순수 회색) → `#0F1419` (blue-tinted slate)
+- Light Background: `#f5f5f7` → `#F8F9FB` (faint blue tint)
+- 기본 액센트 컬러: `#2dd4bf` → `#818CF8` (indigo-400)
+- 컬러 팔레트: Tailwind 500 → 400 레벨, indigo를 첫 번째로 재배치
+- 수정 파일: global.css, Board.css, Board.jsx, BoardSettingsModal.jsx 등 13개 파일
+
+### 동적 텍스트 대비 색상 (--primary-text)
+액센트 컬러 밝기에 따라 primary 배경 위 텍스트 색상 자동 전환:
+- Board.jsx에서 `brightness = (R×299 + G×587 + B×114) / 1000` 공식으로 계산
+- 밝은 색 (yellow, lime 등) → 어두운 텍스트 (`#1A1F36`)
+- 어두운 색 (indigo, purple 등) → 흰색 텍스트 (`#FFFFFF`)
+- `--primary-text` CSS 변수를 통해 모든 primary 배경 요소에 적용
+- 영향 범위: btn-primary, 카테고리 버튼, 보드 로고, 아바타, 설정 모달 등
+
+### 카테고리 뱃지 표시
+- FeedbackCard: 상태 앞에 카테고리 뱃지 추가 (짧은 라벨: Feature, Bug, Improvement)
+- FeedbackDetailPanel: 메타 영역에 Category 행 추가 (전체 라벨)
+
+### Vercel SPA 라우팅 수정
+- `vercel.json` 추가: `"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]`
+- 동적 경로 (`/first` 등)에서 새로고침 시 404 발생하던 문제 해결
+
+### 다크 테마 Select 드롭다운 수정
+- `color-scheme: dark/light` 추가 (global.css, Board.css)
+- status/priority select에 명시적 `background: var(--surface)` + `option` 스타일 지정
+- 다크 모드에서 드롭다운 옵션이 흰 배경에 흰 글씨로 안 보이던 문제 해결
+
+### BoardSettings 저장 오류 수정
+- `custom_domain` 컬럼이 prod DB 스키마 캐시에 없어 저장 실패하던 문제
+- update payload에서 `custom_domain`을 기본 제외, 값 있을 때만 포함
+
+### 하드코딩 색상 정리 (전체 색상 감사)
+- 모든 `color: white`/`color: var(--background)` on primary → `var(--primary-text)`
+- 하드코딩된 teal rgba → CSS 변수 (`var(--primary-15)` 등)
+- Dashboard business 뱃지, Landing 데모 뱃지/상태, Toast 색상 등 CSS 변수화
+- FeedbackCard priority 기본색: 하드코딩 purple → `var(--primary)`
+
+### 커밋 히스토리
+```
+dc15acc fix: Comprehensive color audit - use dynamic primary-text everywhere
+0776b42 feat: Dynamic contrast text color based on accent luminance
+df09a71 fix: Remove custom_domain from default board update payload
+d14a653 fix: Style select dropdowns with explicit background for dark theme
+bb097f3 fix: Add color-scheme for native select dropdowns in dark mode
+1318c00 fix: Add SPA fallback rewrite for client-side routing
+e16f4f7 feat: Overhaul color theme to indigo and display category badges
+```
+
+---
+
+## 이전 작업 (2026-03-02)
 
 ### Edge Function 재배포 완료
 QA에서 수정된 3개 함수 dev/prod 모두 재배포 완료:
@@ -338,18 +394,20 @@ d02f663 fix: Address critical and high severity QA issues across 12 files
 
 ## 배포 상태
 
-### 현재 (2026-03-02)
+### 현재 (2026-03-03)
 - `main` 브랜치에서만 작업
 - main push → Vercel Production 자동 배포 (정상 작동)
+- `vercel.json` SPA rewrite 설정 추가됨
 
 ### 최근 커밋
 ```
-669c4f4 chore: Remove deprecated FeedbackDetail and BoardSettings pages
-fee2794 fix: Remove non-functional language setting from board settings
-a3a04ee feat: Replace alert() calls with toast notification system
-43aa916 refactor: Extract shared constants to src/lib/constants.js
-313b6b5 docs: Update CLAUDE.md with accurate project status
-d02f663 fix: Address critical and high severity QA issues across 12 files
+dc15acc fix: Comprehensive color audit - use dynamic primary-text everywhere
+0776b42 feat: Dynamic contrast text color based on accent luminance
+df09a71 fix: Remove custom_domain from default board update payload
+d14a653 fix: Style select dropdowns with explicit background for dark theme
+bb097f3 fix: Add color-scheme for native select dropdowns in dark mode
+1318c00 fix: Add SPA fallback rewrite for client-side routing
+e16f4f7 feat: Overhaul color theme to indigo and display category badges
 ```
 
 ### Edge Function 배포 상태
